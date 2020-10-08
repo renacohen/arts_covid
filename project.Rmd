@@ -1,0 +1,94 @@
+---
+title: "Cleaning Final Project Code"
+author: "Rena Cohen"
+date: "10/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+```
+
+```{r}
+afta_1 <- afta_raw %>%
+  
+  # Renaming lots of columns to not the survey questions
+  
+  rename(date = 2, city = 4, state = 5, zip_code = 6, purpose = 7,
+         budget = 9, legal_status = 10, presenter = 12, canceled_events = 13,
+         canceled_until = 14, lost_attendees_1 = 15, lost_attendees_2 = 16, lost_revenue_admissions = 22, lost_revenue_admissions_amt = 24, 
+         lost_revenue_non_admissions=25, 
+         lost_revenue_non_admissions_amt = 27, new_expenditures = 28, 
+         new_expenditures_amt = 29, proj_loss_date = 30, 
+         online_presence = 31, financial_reserves = 32, reduced_payroll = 33, 
+         laid_off_staff = 34, laid_off_artists = 35, laid_off_other = 36, 
+         hiring_freeze = 37, bounce_back_21 = 42, laid_off_staff_amt = 43,
+         furloughed_staff_amt = 44,laid_off_artist_amt = 45,
+         furloughed_artist_amt = 46, laid_off_other_amt = 47,
+         furloughed_other_amt = 48, likelihood_staff_reduction = 50,
+         applied_for_assistance = 51, current_status = 60, concern_late_payment = 61,
+         concern_limited_savings = 62, concern_payroll_inability = 63, 
+         concern_bill_inability = 64, concern_cancelled_contracts = 65, 
+         concern_reduced_donations = 66, concern_business_closure = 67, 
+         financial_impact_severity = 69, survival = 70, reopened = 81, reopening_date = 82,
+         target_reopening_date = 83, reopening_plan = 93) %>%
+
+# remember to merge 15 and 16 at some point, they're the same
+  
+  #removing some irrelevant rows 
+  
+  select(-c(1,3,8, 11, 17, 18, 19, 20, 21, 23, 26,29, 38:41, 49, 52:59, 
+            68, 71, 72:75, 76:80, 84:92, 94:ncol(afta_raw))) %>%
+  
+  # Creating my date variable in a usable format
+  
+  mutate(date = mdy_hms(date)) %>%
+  
+  # Chopping off the time survey data on date so that merge will be easier
+  
+  mutate(date = str_sub(date, 1, 10)) %>%
+  mutate(date = ymd(date))
+  
+  
+View(afta_1)
+
+# Playing around
+  test <- afta_1 %>%
+  filter(!is.na(lost_revenue_admissions_amt)) %>%
+    mutate(lost_revenue_admissions_amt = as.numeric(lost_revenue_admissions_amt)) 
+  
+  View
+  
+  ggplot(test, aes(x = lost_revenue_admissions_amt)) +
+    geom_histogram() +
+    xlim(0,100000)
+    
+ggplot(test, )
+  
+```
+
+
+```{r}
+# Exploring our COVID data
+
+covid_data <- all_states_history %>%
+  select(date, state, deathIncrease, positiveIncrease) %>%
+  mutate(date = ymd(date)) %>%
+  rename(abbreviation = state)
+
+state_abbreviations_new <- state_abbreviations %>%
+  rename(abbreviation = 3, state = 2)
+
+merge <- inner_join(state_abbreviations_new, covid_data, by = "abbreviation") %>%
+  select(date, state, deathIncrease, positiveIncrease)
+
+merge2 <- inner_join(merge, afta_1, by = c("state", "date"))
+
+View(merge2)
+
+
+
+```
+

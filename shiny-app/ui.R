@@ -12,14 +12,23 @@ library(tidyverse)
 library(shinythemes)
 
 # Define UI for application that draws a histogram
-shinyUI(
-    navbarPage(theme = shinytheme("darkly"),
-        "App Title",
-               tabPanel(
-                   "Page1"),
-               # You would add your content within the parentheses above.
-               tabPanel(
-                   "Page2"
-               )
-    ))
-
+ui <- navbarPage(
+  "Final Project Title",
+  tabPanel("Model",
+           ggplot(afta_covid, aes(y = lost_revenue_total, fill = fct_reorder(budget, lost_revenue_total, .fun = "mean", na.rm = T)))+
+             geom_boxplot() +
+             ylim(0, 1000000) +
+             labs(title = "Lost Revenue due to COVID in Arts Organizations of Different Sizes",
+                  x = "", y = "Total Lost Revenue") +
+             scale_fill_discrete(name = "Organization Budget"))
+  tabPanel("Discussion",
+           titlePanel("Discussion Title"),
+           p("Tour of the modeling choices you made and 
+              an explanation of why you made them")),
+  tabPanel("About", 
+           titlePanel("About"),
+           h3("Project Background and Motivations"),
+           p("Hello, this is where I talk about my project."),
+           h3("About Me"),
+           p("My name is ______ and I study ______. 
+             You can reach me at ______@college.harvard.edu.")))

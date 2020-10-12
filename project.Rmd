@@ -124,20 +124,21 @@ ggplot(test, )
 ```{r}
 # Exploring our COVID data
 
-covid_data <- all_states_history %>%
-  select(date, state, deathIncrease, positiveIncrease) %>%
+covid <- read_csv("covid.csv")
+covid_cleaner <- covid %>%
+  select(date, state, deathIncrease, positiveIncrease, death, positive) %>%
   mutate(date = ymd(date)) %>%
   rename(abbreviation = state)
 
+state_abbreviations <- read_csv("state_abbreviations.csv")
 state_abbreviations_new <- state_abbreviations %>%
   rename(abbreviation = 3, state = 2)
 
-merge <- inner_join(state_abbreviations_new, covid_data, by = "abbreviation") %>%
-  select(date, state, deathIncrease, positiveIncrease)
+covid_states_merge <- inner_join(state_abbreviations_new, covid_cleaner, by = "abbreviation") %>%
+  select(date, state, deathIncrease, positiveIncrease, abbreviation, death, positive)
 
-merge2 <- inner_join(merge, afta_1, by = c("state", "date"))
+View(covid_states_merge)
 
-View(merge2)
 
 
 
@@ -182,10 +183,17 @@ afta_data_clean <- afta_data_new %>%
   mutate(business_closure = ifelse(is.na(business_closure), F, T))  %>%
   mutate(reduced_philanthropy = ifelse(is.na(`Reduced philanthropic giving:Which of the following are currently major financial concerns for your organization? (Check all that apply.)`), F, T)) %>%
   mutate(increase_online_presence = ifelse(is.na(increase_online_presence), F, T)) %>%
-  select(-"Reduced philanthropic giving:Which of the following are currently major financial concerns for your organization? (Check all that apply.)")
+  select(-"Reduced philanthropic giving:Which of the following are currently major financial concerns for your organization? (Check all that apply.)") %>%
+
+# Adding a variable that takes the total lost revenue
+
+  mutate(lost_revenue_total = lost_revenue_admissions_amt + lost_revenue_non_admissions_amt)
+
 
 # The data is more or less clean now. Time to start adding interesting new variables that
 # can maybe be seen over time! 
+
+
 
 ggplot(afta_data_clean, aes(x = lost_attendees, y = lost_revenue_admissions_amt)) +
   geom_point() +
@@ -194,5 +202,45 @@ ggplot(afta_data_clean, aes(x = lost_attendees, y = lost_revenue_admissions_amt)
 
 
 
+```
+```{r}
+# Merging our AFTA data and our COVID data
+
+afta_covid <- inner_join(covid_states_merge, afta_data_clean, by = c("state", "date"))
+View(afta_covid)
+
+smaller_afta_covid <- afta_covid %>%
+  group_by(state) %>%
+  summarise(num = n(), )
+
+
+
+big_states <- afta_covid %>%
+  group_by(state) %>%
+  summarise(closures = mean(business_closure), financial_impact = mean(severity_financial_impact))
+
+ggplot(big_states, aes(x = closures, y = financial_impact))+
+  geom_point()
+
+# did organizations feel things immediately, or did mean financial impact increase over time?
+
+dates <- afta_covid %>%
+  group_by(date) %>%
+  summarise(number_respondents = n())
+
+ggplot(dates, aes(x = date, y = number_respondents)) +
+  geom_point()
+
+
+org_size <- afta_covid %>%
+  group_by(budget) %>%
+  summarise(mean_rev_lost= mean(lost_revenue_total, na.rm = T)) 
+
+ggplot(afta_covid, aes(y = lost_revenue_total, fill = fct_reorder(budget, lost_revenue_total, .fun = "mean", na.rm = T)))+
+  geom_boxplot() +
+  ylim(0, 1000000) +
+  labs(title = "Lost Revenue due to COVID in Arts Organizations of Different Sizes",
+       x = "", y = "Total Lost Revenue") +
+  scale_fill_discrete(name = "Organization Budget") 
 ```
 

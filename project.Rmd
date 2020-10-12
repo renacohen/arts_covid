@@ -195,14 +195,9 @@ afta_data_clean <- afta_data_new %>%
 
 
 
-ggplot(afta_data_clean, aes(x = lost_attendees, y = lost_revenue_admissions_amt)) +
-  geom_point() +
-  ylim(0,10e6) +
-  xlim(0,10e4)
-
-
-
 ```
+
+
 ```{r}
 # Merging our AFTA data and our COVID data
 
@@ -235,6 +230,8 @@ ggplot(dates, aes(x = date, y = number_respondents)) +
 org_size <- afta_covid %>%
   group_by(budget) %>%
   summarise(mean_rev_lost= mean(lost_revenue_total, na.rm = T)) 
+
+saveRDS(afta_covid, file = "afta_covid.RDS")
 
 ggplot(afta_covid, aes(y = lost_revenue_total, fill = fct_reorder(budget, lost_revenue_total, .fun = "mean", na.rm = T)))+
   geom_boxplot() +

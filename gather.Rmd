@@ -180,7 +180,9 @@ afta_data_clean <- afta_data_new %>%
   mutate(inability_paying_bills = ifelse(is.na(inability_paying_bills), F, T)) %>%
   mutate(cancelled_contracts = ifelse(is.na(cancelled_contracts), F, T)) %>%
   mutate(business_closure = ifelse(is.na(business_closure), F, T))  %>%
-  mutate(reduced_philanthropy = ifelse(is.na(`Reduced philanthropic giving:Which of the following are currently major financial concerns for your organization? (Check all that apply.)`), F, T)) %>%
+  mutate(reduced_philanthropy = ifelse(is.na(`Reduced philanthropic giving:Which of the following 
+                                              are currently major financial concerns for your organization? 
+                                                (Check all that apply.)`), F, T)) %>%
   mutate(increase_online_presence = ifelse(is.na(increase_online_presence), F, T)) %>%
   select(-"Reduced philanthropic giving:Which of the following are currently major financial concerns for your organization? (Check all that apply.)") %>%
 
@@ -233,7 +235,10 @@ org_size <- afta_covid %>%
   group_by(budget) %>%
   summarise(mean_rev_lost= mean(lost_revenue_total, na.rm = T)) 
 
+# Here I'm making my RDS
+
 saveRDS(afta_covid, file = "afta_covid.RDS")
+read_rds(afta_covid)
 
 ggplot(afta_covid, aes(y = lost_revenue_total, fill = fct_reorder(budget, lost_revenue_total, .fun = "mean", na.rm = T)))+
   geom_boxplot() +

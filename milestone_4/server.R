@@ -8,14 +8,17 @@
 #
 
 library(shiny)
+library(ggplot2)
+library(tidyverse)
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
 
     output$histogram <- renderPlot({
 
-        ggplot(afta_covid, aes(y = lost_revenue_total, fill = fct_reorder(budget, lost_revenue_total, .fun = "mean", na.rm = T)))+
-            geom_boxplot() +
+        ggplot(afta_covid, aes(y = lost_revenue_total, fill = 
+                                   fct_reorder(budget, lost_revenue_total, .fun = "mean", na.rm = T)))+
+            geom_boxplot(na.rm = T) +
             ylim(0, 1000000) +
             labs(title = "Lost Revenue due to COVID in Arts Organizations of Different Sizes",
                  x = "", y = "Total Lost Revenue") +

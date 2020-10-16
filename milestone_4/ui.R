@@ -28,3 +28,4 @@ ui <- navbarPage(
              h3("About Me"),
              p("My name is Rena Cohen and I study WGS with a secondary in Statistics. 
              You can reach me at renacohen@college.harvard.edu.")))
+

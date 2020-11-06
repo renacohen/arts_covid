@@ -81,8 +81,6 @@ mutate(survival = str_sub(survival, 1, 1)) %>%
 
 glimpse(afta_1$lost_attendees_1)
 glimpse(afta_raw$)
-  
-View(afta_1)
 
 # Playing around
   test <- afta_1 %>%
@@ -195,14 +193,14 @@ afta_data_clean <- afta_data_new %>%
 # can maybe be seen over time! 
 
 
-
 ```
 
 
 ```{r}
 # Merging our AFTA data and our COVID data
 
-afta_covid <- inner_join(covid_states_merge, afta_data_clean, by = c("state", "date"))
+afta_covid <- inner_join(covid_states_merge, afta_data_clean, by = c("state", "date")) %>%
+  mutate(region = case_when())
 View(afta_covid)
 
 smaller_afta_covid <- afta_covid %>%
@@ -239,6 +237,10 @@ org_size <- afta_covid %>%
 
 saveRDS(afta_covid, file = "afta_covid.RDS")
 read_rds(afta_covid)
+View(afta_covid)
+
+afta_1 <- readRDS("~/Desktop/GOV 50/final_project/afta_1.RDS")
+View(afta_1)
 
 ggplot(afta_covid, aes(y = lost_revenue_total, fill = fct_reorder(budget, lost_revenue_total, .fun = "mean", na.rm = T)))+
   geom_boxplot() +
@@ -246,5 +248,23 @@ ggplot(afta_covid, aes(y = lost_revenue_total, fill = fct_reorder(budget, lost_r
   labs(title = "Lost Revenue due to COVID in Arts Organizations of Different Sizes",
        x = "", y = "Total Lost Revenue") +
   scale_fill_discrete(name = "Organization Budget") 
+```
+
+```{r}
+afta_covid <- readRDS("~/Desktop/GOV 50/final_project/milestone_4/processed_data/afta_covid.RDS")
+View(afta_covid)
+afta_covid <- afta_covid %>%
+  mutate(region = case_when())
+
+?case_when
+
+data2 <- afta_covid %>%
+        reorder(x = budget, X = c("No Budget/All Volunteer", "Less than 100,000", "100,000 to 249,000",
+                                  "250,000 to 499,000", "500,000 to 999,999",
+                                  "1,000,000 to 4,999,999", "5,000,000 to 9,999,999", 
+                                  "10,000,000 or more"))
+
+library(RColorBrewer)
+display.brewer.all()
 ```
 

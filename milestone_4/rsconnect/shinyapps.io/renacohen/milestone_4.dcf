@@ -1,0 +1,12 @@
+name: milestone_4
+title: milestone_4
+username:
+account: renacohen
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3035359
+bundleId: 3750783
+url: https://renacohen.shinyapps.io/milestone_4/
+when: 1602894015.99191
+asMultiple: FALSE
+asStatic: FALSE

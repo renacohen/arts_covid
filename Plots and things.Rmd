@@ -1,0 +1,220 @@
+---
+title: "Plots"
+author: "Rena Cohen"
+date: "11/12/2020"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+
+afta_covid <- readRDS("~/Desktop/GOV 50/final_project/milestone_4/processed_data/afta_covid.RDS")
+
+afta_covid
+num_per_day <- afta_covid %>%
+  group_by(date) %>%
+  summarise(per_day = n(), .groups = "drop")
+
+range(num_per_day$date)
+```
+
+```{r}
+# This plot allows you to see the number of organizations that answered the survey per day
+
+ggplot(num_per_day, aes(x = date, y = per_day)) +
+  geom_segment(aes(x = date, xend = date, y = 0, yend = per_day), color = "thistle") +
+  geom_point(size = 1.5, color = "maroon", fill = alpha("orchid", 0.3)) +
+  theme_classic() +
+  labs(title = "How Many Organizations Answered 
+       the Survey Each Day?", x = "Date Survey was Taken", y = "Number of Responses")
+
+
+  
+```
+
+```{r}
+small_orgs <- afta_covid %>%
+  filter(lost_revenue_total < 10000000) %>%
+  filter(lost_attendees < 100000) %>%
+  ggplot(aes(x = lost_attendees, y = lost_revenue_total, na.rm = T)) +
+  geom_point()
+
+
+```
+
+```{r}
+state_and_size <- afta_covid %>%
+filter(date <= "2020-06-01") %>%
+group_by(state, budget) %>%
+summarise(av_rev_loss = mean(lost_revenue_total, na.rm = T)) %>%
+  filter(budget == "500,000 to  999,999") %>%
+  arrange(av_rev_loss)
+
+View(state_and_size)
+
+ggplot(data = state_and_size, aes(x = av_rev_loss)) +
+  geom_histogram(fill = "lightblue", color = "black", na.rm = T)+
+  theme_classic() +
+  labs(title = "Average Lost Revenue", 
+       subtitle = "Choose an organization size",
+       x = "Average Revenue Loss (USD)", y = "Number of States") +
+  geom_vline(xintercept = mean(state_and_size$av_rev_loss,
+                                na.rm = T), color = "maroon", lwd = 1.5, 
+             lty = 4) +
+  geom_text(x = 1.25*mean(state_and_size$av_rev_loss,
+                                na.rm = T), y = 6, label = "Mean lost revenue",
+            color = "maroon")
+
+unique(afta_covid$budget)
+```
+
+```{r}
+library(leaflet)
+
+
+library(readr)
+
+zips <- read_csv("raw_data/uszips.csv") %>%
+  rename("zip_code" = zip) %>%
+  select(lat, lng, zip_code)
+
+
+with_zips <- left_join(afta_covid, zips, by = "zip_code")
+
+num_zip <- new %>%
+  group_by(zip_code) %>%
+  summarise(n = n())
+
+new_2 <- inner_join(new, num_zip, by = "zip_code")
+View(new_2)
+
+saveRDS(new_2, file = "map_data.RDS")
+maps <- readRDS("map_data")
+View(maps)
+
+maps <- readRDS()
+
+  leaflet(new_2) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  setView(lat = 39.8283, lng = -98.5795, zoom = 4) %>%
+  addCircleMarkers(lng = ~lng, lat = ~lat, weight = 1, color = "darkmagenta", fillColor = "thistle", radius = ~n, fillOpacity = 0.5, label = ~n)
+  
+  ?addCircleMarkers
+```
+```{r}
+# Here's a nice plot organized by budget and legal status
+
+cute_pal <- c("thistle", "lavenderblush2", "lightblue1", "thistle2", "lightblue3", "azure3", "darkmagenta", "maroon","plum4")
+afta_covid_2 <- readRDS("~/Desktop/GOV 50/final_project/milestone_4/processed_data/afta_covid_2.RDS")
+afta_covid_2 %>%
+  filter(state = ) %>%
+ggplot(afta_covid_2, aes(x = budget, fill = legal_status))  + 
+  geom_bar(color = "azure3") +
+  theme_classic() +
+  theme(axis.text.x = element_text(size = 5, angle = 45, vjust = 0.6)) +
+  scale_fill_manual(values = cute_pal, name = "Legal Status") +
+  labs(title = "Organizations by Budget and Legal Status",
+       subtitle = "Most respondents are nonprofits with smaller budgets",
+       x = "Budget", y = "Number of Organizations")
+
+?element_text
+
+?scale_fill_manual()
+  
+```
+
+```{r}
+# Here's a plot that explains things by type of organization
+afta_covid_2 %>%
+  filter(state == "Missouri") %>%
+ggplot(aes(x = purpose)) + 
+  geom_bar(color = "azure3", fill = "lavenderblush2") +
+  theme_classic() +
+  scale_x_discrete(labels = c("Literary \nart", "Local/regional/\nstate arts agency", "Media arts", "Other",
+  "Performing Arts", "School/\n College / University", "Visual arts/\n Museum")) + 
+  theme(axis.text.x = element_text(size = 8)) +
+  scale_fill_manual(values = cute_pal, name = "Legal Status") +
+  labs(title = "Organizations by Type",
+       subtitle = "Plurality of Respondents are Performing Arts Organizations",
+       x = "Organization Purpose", y = "Number of Organizations")
+
+```
+
+```{r}
+states <- afta_covid_2 %>%
+  group_by(state) %>%
+  summarise(financial_severity = mean(severity_financial_impact), .groups = "drop") %>%
+  arrange((state)) %>%
+  mutate(pop)
+
+View(states)
+
+ggplot(states, aes(x = financial_severity, fill = state)) +
+  geom_histogram(binwidth = 0.05) 
+```
+
+```{r}
+# Here is a word cloud
+
+library(readxl)
+written_responses <- read_excel("raw_data/written_responses.xlsx") %>%
+  rename(responses = "OPTIONALIs there anything else you would like to share about the impact of COVID-19 on your organization?") %>%
+  filter(!is.na(responses))
+
+saveRDS(written_responses, file = "written_responses.RDS")
+library(wordcloud)
+library(tm)
+library(wordcloud2)
+
+?wordcloud
+
+responses = c(written_responses$responses[1:1000])
+bad_words = c("m", "we", "will", "our", "Our", "the", "We", "this", "This", "I", "The", "us", "As", "'", "many", "now", "It", "just", "much", "also", ",", "get", "well", "already", "may", "likely", "can", c(stopwords("english")))
+responses_no_stopwords <- c(map_chr(responses, removeWords, bad_words)) %>%
+  str_split(" ") 
+
+words.freq <- table(unlist(responses_no_stopwords))
+data = cbind.data.frame(names(words.freq),as.integer(words.freq)) %>%
+  slice(-(1:4)) %>%
+  rename("word" = "names(words.freq)", freq = "as.integer(words.freq)") %>%
+  filter(freq > 25) %>%
+  slice(-(1:4))
+
+saveRDS(data, file = "word_data.RDS")
+
+wordcloud2(data = word_data, size = 1, color = c(rep(c("thistle", "darkmagenta", "lightsteelblue", 	"#DDA0DD", "#d9d9d9"), 100)), shape = "circle")
+
+cute_pal
+?fontFamily
+
+col2rgb("lightpink3")
+
+```
+
+```{r}
+library(tidyverse)
+
+cute_pal
+
+afta_covid_2 %>%
+  group_by(budget) %>%
+  summarise(survival_chances = mean(survival_chances, na.rm = T), .groups = "drop") 
+
+afta_covid_2 %>%
+  filter(budget != "No budget / all volunteer", budget != "NA") %>%
+  ggplot(aes(x= survival_chances, fill = budget))+
+  geom_bar(na.rm = T, color = "plum4") +
+  
+  # Scales = free keeps us from always having to use the same thing on the Y axis 
+  
+  facet_wrap(~budget, scales = "free") +
+  theme_classic() + 
+  scale_fill_manual(values = c(cute_pal[1:6], "lightblue2")) +
+  # Hiding the legend, it's really not necessary since the fill is just different 
+  # colors
+  theme(legend.position = "none") + 
+  labs(title = "Likelihood of Survival by Organizational Budget",
+       subtitle = "5 is most confident of survival, 1 is least confident", x = "Self-Reported Likelihood of Organization Survival", y = "Number of Organizations")
+```
+

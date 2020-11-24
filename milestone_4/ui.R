@@ -8,13 +8,18 @@
 #
 
 library(shiny)
+library(shinythemes)
+library(leaflet)
+library(wordcloud)
+library(tm)
+library(wordcloud2)
 
 
-ui <- navbarPage(
+ui <- navbarPage(theme = shinytheme("yeti"),
     "The Impact of Coronavirus On Arts Organizations",
-    tabPanel("Data from Your State",
-                 titlePanel("Lost Revenue"),
-                 mainPanel(selectInput("var2", "State", c("Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+    tabPanel("Explore Data by State",
+                 fluidPage(titlePanel("Lost Revenue"),
+                 sidebarPanel(selectInput("var2", "State", c("Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
                                                           "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana",
                                                           "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", 
                                                           "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", 
@@ -27,22 +32,56 @@ ui <- navbarPage(
              br(),
              br(),
              br(),
+             mainPanel(
       
+             
+                           plotOutput("plot1"),
+             br(),
+             br(),
+             br(),
+             
              
                            plotOutput("plot2"),
              br(),
              br(),
              br(),
+
              
-                           plotOutput("plot3"),
-             br(),
-             br(),
-             br(),
-             
-                           plotOutput("plot4"),
-              
+             sliderInput("dates", "Choose a Range of Dates",
+                         min = as.Date("2020-03-13", "%Y-%m-%d"),
+                         max = as.Date("2020-09-02", "%Y-%m-%d"), 
+                         value = c(as.Date("2020-03-13", timeFormat = "%Y-%m-%d"),
+                                   as.Date("2020-09-02", "%Y-%m-%d"))),
+             plotOutput("num_org"),
+             leafletOutput("map"),
+
                                
-             ),
+             ))),
+    tabPanel("Modeling Economic Impact",
+             titlePanel("Modeling lost revenue"),
+             h3("Why I modeled small orgs"),
+             plotOutput("survival_budget"),
+             mainPanel(
+             h3("Here's a model")),
+             selectInput("orgsize", "Organization Budget", c("Less than  100,000",
+                                                             "100,000 to  249,999",
+                                                             "250,000 to  499,999",
+                                                             "500,000 to  999,999",
+                                                             "1,000,000 to  4,999,999",
+                                                             "5,000,000 to  9,999,999")),
+             plotOutput("plot_rev")),
+    
+    tabPanel("Broadening to Pandemic",
+             titlePanel("Relating Arts Organizations to COVID status")),
+    tabPanel("Exploring Textual Data",
+             titlePanel("Here's some text"),
+             wordcloud2Output("cloud"),
+             br(),
+             br(),
+             br(),
+             selectInput("sentiment", "Sentiment of Message", c("Fear", "Loss", "Resilience",
+                                                                "Exhaustion")),
+             tableOutput("response_table")),
     tabPanel("About", 
              titlePanel("About"),
              h3("Project Background and Motivations"),
@@ -55,5 +94,4 @@ ui <- navbarPage(
              h3("About Me"),
              p("My name is Rena Cohen and I study WGS with a secondary in Statistics. 
              You can reach me at renacohen@college.harvard.edu.")))
-
 

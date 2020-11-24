@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
-View(afta_raw)
+
 ```
 
 ```{r}
@@ -121,20 +121,19 @@ ggplot(test, )
 ```{r}
 # Exploring our COVID data
 
-covid <- read_csv("covid.csv")
+covid <- read_csv("raw_data/covid.csv")
 covid_cleaner <- covid %>%
   select(date, state, deathIncrease, positiveIncrease, death, positive) %>%
   mutate(date = ymd(date)) %>%
   rename(abbreviation = state)
 
-state_abbreviations <- read_csv("state_abbreviations.csv")
+state_abbreviations <- read_csv("raw_data/state_abbreviations.csv")
 state_abbreviations_new <- state_abbreviations %>%
   rename(abbreviation = 3, state = 2)
 
 covid_states_merge <- inner_join(state_abbreviations_new, covid_cleaner, by = "abbreviation") %>%
   select(date, state, deathIncrease, positiveIncrease, abbreviation, death, positive)
 
-View(covid_states_merge)
 
 
 
@@ -144,7 +143,7 @@ View(covid_states_merge)
 
 ```{r}
 library(readxl)
-afta_data_new <- read_excel("afta_data_new_columns.xlsx", col_types = c("text", "text",
+afta_data_new <- read_excel("raw_data/afta_data_new_columns.xlsx", col_types = c("text", "text",
                             "text", "text", "text", "text", "text", "text", "text",
                             "text", "numeric", "text", "numeric", "text", "numeric", "text", 
                             "numeric", "text", "text", "text", "text", "text",
@@ -155,6 +154,11 @@ afta_data_new <- read_excel("afta_data_new_columns.xlsx", col_types = c("text", 
 
 
 # Cleaning some data now that it's read in 
+
+# Adding in that one survival row that I forgot before
+
+survival_data <- read_excel("raw_data/survival_data.xlsx", col_types = c("numeric")) %>%
+  select(survival_chances)
 
 # I will begin by formatting the dates properly. Here are the survey dates
 
@@ -178,15 +182,14 @@ afta_data_clean <- afta_data_new %>%
   mutate(inability_paying_bills = ifelse(is.na(inability_paying_bills), F, T)) %>%
   mutate(cancelled_contracts = ifelse(is.na(cancelled_contracts), F, T)) %>%
   mutate(business_closure = ifelse(is.na(business_closure), F, T))  %>%
-  mutate(reduced_philanthropy = ifelse(is.na(`Reduced philanthropic giving:Which of the following 
-                                              are currently major financial concerns for your organization? 
-                                                (Check all that apply.)`), F, T)) %>%
+  mutate(reduced_philanthropy = ifelse(is.na(`Reduced philanthropic giving:Which of the following are currently major financial concerns for your organization? (Check all that apply.)`), F, T)) %>%
   mutate(increase_online_presence = ifelse(is.na(increase_online_presence), F, T)) %>%
   select(-"Reduced philanthropic giving:Which of the following are currently major financial concerns for your organization? (Check all that apply.)") %>%
 
 # Adding a variable that takes the total lost revenue
 
-  mutate(lost_revenue_total = lost_revenue_admissions_amt + lost_revenue_non_admissions_amt)
+  mutate(lost_revenue_total = lost_revenue_admissions_amt + lost_revenue_non_admissions_amt) %>%
+  cbind(survival_data)
 
 
 # The data is more or less clean now. Time to start adding interesting new variables that
@@ -199,9 +202,7 @@ afta_data_clean <- afta_data_new %>%
 ```{r}
 # Merging our AFTA data and our COVID data
 
-afta_covid <- inner_join(covid_states_merge, afta_data_clean, by = c("state", "date")) %>%
-  mutate(region = case_when())
-View(afta_covid)
+afta_covid <- inner_join(covid_states_merge, afta_data_clean, by = c("state", "date")) 
 
 smaller_afta_covid <- afta_covid %>%
   group_by(state) %>%
@@ -248,23 +249,95 @@ ggplot(afta_covid, aes(y = lost_revenue_total, fill = fct_reorder(budget, lost_r
   labs(title = "Lost Revenue due to COVID in Arts Organizations of Different Sizes",
        x = "", y = "Total Lost Revenue") +
   scale_fill_discrete(name = "Organization Budget") 
+
+
 ```
 
 ```{r}
-afta_covid <- readRDS("~/Desktop/GOV 50/final_project/milestone_4/processed_data/afta_covid.RDS")
-View(afta_covid)
-afta_covid <- afta_covid %>%
-  mutate(region = case_when())
+unique(afta_covid$purpose)
 
-?case_when
 
-data2 <- afta_covid %>%
-        reorder(x = budget, X = c("No Budget/All Volunteer", "Less than 100,000", "100,000 to 249,000",
-                                  "250,000 to 499,000", "500,000 to 999,999",
-                                  "1,000,000 to 4,999,999", "5,000,000 to 9,999,999", 
-                                  "10,000,000 or more"))
+afta_covid_2 <- readRDS("~/Desktop/GOV 50/final_project/milestone_4/processed_data/afta_covid.RDS") %>%
+  mutate(purpose = case_when(purpose == "Performing arts organization (e.g., dance, music, theater, presenter)" | purpose == "Performing arts (e.g., dance, music, theater, presenter)" ~ "Performing Arts",
+                             purpose == "Visual arts organization / museum / exhibit" | purpose == "Visual arts / exhibition / museum" ~ "Visual arts / Museum",
+                             purpose == "Regional arts organization" | purpose == "Local arts agency (city, county, multi-county region)" | purpose == "State arts agency" ~ "Local/regional/state arts agency",
+                             purpose == "School / college / university" ~ "School / college / university",
+                             purpose == "Media arts organization / film / video" | purpose == "Media arts / film / video" ~ "Media Arts", 
+                             purpose == "Literary arts organization" ~ "Literary art",
+                             TRUE ~ "Other")) %>%
+  mutate(budget = fct_relevel(budget,"No budget / all volunteer" , "Less than  100,000", "100,000 to  249,999", "250,000 to  499,999", "500,000 to  999,999", "1,000,000 to  4,999,999", "5,000,000 to  9,999,999", "10,000,000 or more")) %>%
+  mutate(legal_status = case_when(legal_status == "Nonprofit / private organization (e.g. 501c3)" | 
+                                    legal_status == "Nonprofit / private organization" ~ "Nonprofit",
+                                  legal_status == "For-profit / commercial business" | legal_status ==
+                                    "For-profit business" ~ "For-profit business", 
+                                  legal_status == "Government entity" | legal_status == "Government department / division / program / facility" ~ "Government entity",
+                                  legal_status == "Unincorporated / volunteer" ~ "Unincorporated / volunteer",
+                                  TRUE ~ "Other"))
 
-library(RColorBrewer)
-display.brewer.all()
+
+
+
+saveRDS(afta_covid_2, file = "afta_covid_2.RDS")
+read_rds(afta_covid_2)
+
+
+ggplot(afta_covid_2, aes(x = budget, fill = legal_status)) + 
+  geom_bar()
+
+
+
+
+```
+
+```{r}
+state_pop <- read_excel("~/Desktop/GOV 50/final_project/raw_data/state_pop.xlsx") %>%
+  rename("state" = State) %>%
+  mutate(state = str_sub(state, start = 2))
+
+View(state_pop)
+
+afta_covid_2$likelihood_staff_reductions
+
+
+covid_rates <- inner_join(afta_covid_2, state_pop, by = "state") %>%
+  filter(date < "2020-05-14") %>%
+  select(state, positive, severity_financial_impact, Pop, likelihood_staff_reductions) %>%
+  mutate(pos_rate = positive/Pop) %>%
+  group_by(state) %>%
+  summarise(financial_severity = mean(severity_financial_impact, na.rm = T),
+            pos_rate = mean(pos_rate), 
+            likelihood_staff_reductions = mean(likelihood_staff_reductions, na.rm = T), .groups = "drop")
+
+ggplot(covid_rates, aes(x = pos_rate, y = financial_severity)) +
+  geom_point()
+
+ggplot(covid_rates, aes(x = pos_rate, y = likelihood_staff_reductions)) +
+  geom_point()
+
+unique(afta_covid_2$date)
+state_pop$state
+
+View(afta_covid_2)
+```
+```{r}
+afta_covid_2 %>%
+  group_by(budget) %>%
+  summarise
+```
+
+
+```{r}
+library(readxl)
+responses_coded <- read_excel("raw_data/responses_coded.xlsx")
+saveRDS(responses_coded, "responses_coded.RDS")
+
+library(gt)
+responses_coded %>%
+  #filter(Sentiment == ) %>%
+  select(Comment) %>%
+  gt
+
+afta <- read_excel("raw_data/afta.xlsx")
+
 ```
 

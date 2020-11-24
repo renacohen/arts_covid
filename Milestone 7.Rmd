@@ -1,0 +1,66 @@
+---
+title: "The Impact of Coronavirus On Arts Organizations"
+author: "Rena Cohen"
+date: "11/12/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+```{r include = F}
+library(tidyverse)
+```
+
+This summer, I had the opportunity to intern with Americans for the Arts, a national arts advocacy organization. 
+
+```{r echo = F}
+
+afta_covid <- readRDS("~/Desktop/GOV 50/final_project/milestone_4/processed_data/afta_covid.RDS")
+
+num_per_day <- afta_covid %>%
+  group_by(date) %>%
+  summarise(per_day = n(), .groups = "drop")
+
+ggplot(num_per_day, aes(x = date, y = per_day)) +
+  geom_segment(aes(x = date, xend = date, y = 0, yend = per_day), color = "thistle") +
+  geom_point(size = 1.5, color = "maroon", fill = alpha("orchid", 0.3)) +
+  theme_classic() +
+  labs(title = "How Many Organizations Answered 
+       the Survey Each Day?", x = "Date Survey was Taken", y = "Number of Responses")
+```
+
+```{r echo = F}
+relevant = c("Nonprofit / private organization (e.g. 501c3)", 
+             "For-profit / commercial business", "Government entity")
+
+small_orgs <- afta_covid %>%
+  filter(budget == "100,000 to  249,999") %>%
+  filter(legal_status %in% relevant) %>%
+  mutate(legal_status = ifelse(legal_status == "Nonprofit / private organization (e.g. 501c3)", 
+                                "Nonprofit", legal_status))
+ggplot(small_orgs, aes(y = lost_revenue_total)) +
+  geom_boxplot(fill = "thistle") +
+  scale_y_continuous(limits = c(0,400000), labels = scales::dollar_format()) +
+  facet_wrap(~legal_status) + 
+  labs(title = "Revenue Loss by Organization Type",
+       subtitle = "For organizations with annual budgets from $100,000 to  $249,999",
+       y = "Lost Revenue") +
+  theme_bw() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+```
+
+```{r}
+small_orgs_2 <- afta_covid %>%
+  filter(budget == "100,000 to  249,999")
+
+ggplot(small_orgs_2, aes(x = lost_attendees, y = lost_revenue_total, color = purpose)) +
+  geom_point() +
+  scale_x_continuous(limits = c(0,30000)) + 
+  scale_y_continuous(limits = c(0,400000), labels = scales::dollar_format()) +
+  theme_bw() +
+  labs(title = "Lost Revenue vs. Lost Attendees", 
+       subtitle = "Seemingly little connection between lost attendees and lost revenue", 
+       x = "Number of lost attendees", y = "Lost Revenue")
+```
+

@@ -13,6 +13,7 @@ library(leaflet)
 library(wordcloud)
 library(tm)
 library(wordcloud2)
+library(gganimate)
 
 
 ui <- navbarPage(theme = shinytheme("yeti"),
@@ -72,7 +73,8 @@ ui <- navbarPage(theme = shinytheme("yeti"),
              plotOutput("plot_rev")),
     
     tabPanel("Broadening to Pandemic",
-             titlePanel("Relating Arts Organizations to COVID status")),
+             titlePanel("Relating Arts Organizations to COVID status"),
+             includeHTML("file:///Users/renacohen/Desktop/GOV 50/final_project/animation.html")),
     tabPanel("Exploring Textual Data",
              titlePanel("Here's some text"),
              wordcloud2Output("cloud"),

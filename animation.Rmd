@@ -1,0 +1,36 @@
+---
+title: ""
+author: ""
+date: ""
+output: html_document
+---
+```{r, include = F}
+library(gganimate)
+library(readr)
+library(ggplot2)
+library(readxl)
+library(tidyverse)
+
+unemployment_data <- read_excel("raw_data/artists_unemployment.xlsx") %>%
+  mutate(date = as.Date(Date)) %>% 
+  mutate(Rate = Rate/100)
+saveRDS(unemployment_data, file = "unemployment_data.RDS")
+```
+
+
+```{r, echo = F}
+unemployment_data %>%
+  ggplot(aes(x = date, y = Rate, group = Type, color = Type)) +
+  geom_line(lwd = 2) +
+  geom_point() +
+  transition_reveal(date) +
+  scale_color_manual(values = c("lightblue3", "darkmagenta", "lightpink2")) +
+  labs(title = "Unemployment Rate by Sector", 
+       subtitle = "Arts and leisure harder hit than most",
+       x = "Date", y = "Unemployment Rate",
+       caption = "Source: US Bureau of Labor Statistics") +
+  theme_bw() +
+  scale_y_continuous(labels = scales::percent_format())
+
+```
+

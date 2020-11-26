@@ -10,8 +10,8 @@
 afta_covid <- readRDS(file = "processed_data/afta_covid.RDS")
 afta_covid_2 <- readRDS(file = "processed_data/afta_covid_2.RDS")
 map_data <- readRDS(file = "processed_data/map_data.RDS")
-word_data <- readRDS("~/Desktop/GOV 50/final_project/milestone_4/processed_data/word_data.RDS")
-responses_coded <- readRDS("~/Desktop/GOV 50/final_project/milestone_4/processed_data/responses_coded.RDS")
+word_data <- readRDS("processed_data/word_data.RDS")
+responses_coded <- readRDS("processed_data/responses_coded.RDS")
 
 library(shiny)
 library(ggplot2)
@@ -19,6 +19,7 @@ library(tidyverse)
 library(RColorBrewer)
 library(ggmap)
 library(gt)
+library(treemap)
 
 shinyServer(function(input, output) {
   
@@ -46,16 +47,12 @@ shinyServer(function(input, output) {
   output$plot2 <- renderPlot({
     afta_covid_2 %>%
       filter(state == input$var2) %>%
-      ggplot(aes(x = purpose)) + 
-      geom_bar(color = "plum4", fill = "lavenderblush2") +
-      theme_classic() +
-      scale_x_discrete(labels = c("Literary \nart", "Local/regional/\nstate arts agency", "Media arts", "Other",
-                                  "Performing Arts", "School/\n College / University", "Visual arts/\n Museum")) + 
-      theme(axis.text.x = element_text(size = 8)) +
-      scale_fill_manual(values = cute_pal, name = "Legal Status") +
-      labs(title = "Organizations by Type",
-           subtitle = "Plurality of Respondents are Performing Arts Organizations",
-           x = "Organization Purpose", y = "Number of Organizations")
+    select(purpose) %>%
+      group_by(purpose) %>%
+      summarise(value = n(), .groups = "drop") %>%
+      treemap(index = "purpose", vSize = "value", palette = cute_pal_hex,
+              border.col = "white", 
+              title = "Organization Types")
 
     })
     

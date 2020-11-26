@@ -218,3 +218,21 @@ afta_covid_2 %>%
        subtitle = "5 is most confident of survival, 1 is least confident", x = "Self-Reported Likelihood of Organization Survival", y = "Number of Organizations")
 ```
 
+```{r}
+# Trying to make a treemap here
+col2hex <- function(col, alpha) rgb(t(col2rgb(col)), alpha=alpha, maxColorValue=255)
+
+cute_pal_hex <- col2hex(cute_pal)
+
+library(treemap)
+
+afta_covid_2 %>%
+  filter(state = input$state)
+  select(purpose) %>%
+  group_by(purpose) %>%
+  summarise(value = n()) %>%
+  treemap(index = "purpose", vSize = "value", palette = cute_pal_hex,
+          border.col = "white", 
+          title = "Organization Types")
+```
+

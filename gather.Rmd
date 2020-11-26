@@ -294,35 +294,63 @@ state_pop <- read_excel("~/Desktop/GOV 50/final_project/raw_data/state_pop.xlsx"
   rename("state" = State) %>%
   mutate(state = str_sub(state, start = 2))
 
-View(state_pop)
-
-afta_covid_2$likelihood_staff_reductions
-
 
 covid_rates <- inner_join(afta_covid_2, state_pop, by = "state") %>%
   filter(date < "2020-05-14") %>%
-  select(state, positive, severity_financial_impact, Pop, likelihood_staff_reductions) %>%
+  select(positive, severity_financial_impact, Pop, likelihood_staff_reductions, abbreviation, survival_chances, budget) %>%
   mutate(pos_rate = positive/Pop) %>%
-  group_by(state) %>%
+  group_by(abbreviation) %>%
+  filter(budget == "100,000 to  249,999") %>%
+  #filter(pos_rate < 0.004) %>%
   summarise(financial_severity = mean(severity_financial_impact, na.rm = T),
             pos_rate = mean(pos_rate), 
-            likelihood_staff_reductions = mean(likelihood_staff_reductions, na.rm = T), .groups = "drop")
+            likelihood_staff_reductions = mean(likelihood_staff_reductions, na.rm = T),
+            survival_chances = mean(survival_chances, na.rm = T), .groups = "drop")
 
 ggplot(covid_rates, aes(x = pos_rate, y = financial_severity)) +
-  geom_point()
+  geom_point(alpha = 0) + 
+  geom_text(aes(label = abbreviation), color = "plum4") +
+  labs(title = "") +
+  theme_bw() +
+  geom_smooth(method = "lm", formula = y~x, color = "darkmagenta") +
+  theme_bw() +
+  labs(title = "Average Financial Severity vs. Covid Rates",
+       subtitle = "5 = Most Severe, 1 = Least Severe", 
+       x = "Population Covid Rate",
+       y = "Average Financial Severity")
 
 ggplot(covid_rates, aes(x = pos_rate, y = likelihood_staff_reductions)) +
-  geom_point()
+  geom_point(alpha = 0) + 
+  geom_text(aes(label = abbreviation), color = "lightblue3") +
+  geom_smooth(method = "lm", formula = y~x, color = "lightblue4") +
+  theme_bw() +
+  labs(title = "Average Likelihood of Staff Reduction vs. Covid Rates",
+       subtitle = "5 = Most Likely, 1 = Least Likely", 
+       x = "Population Covid Rate",
+       y = "Average Likelihood of Staff Reduction")
 
-unique(afta_covid_2$date)
-state_pop$state
+ggplot(covid_rates, aes(x = pos_rate, y = survival_chances)) +
+  geom_point(alpha = 0) + 
+  geom_text(aes(label = abbreviation), color = "thistle3") +
+  geom_smooth(method = "lm",formula = y~x,  color = "thistle4") +
+  theme_bw() +
+  labs(title = "Average Chance of Organization Survival vs. Covid Rates",
+       subtitle = "5 = Most Likely to Survive, 1 = Least Like", 
+       x = "Population Covid Rate",
+       y = "Average Chance of Organization Survival")
 
-View(afta_covid_2)
-```
-```{r}
-afta_covid_2 %>%
-  group_by(budget) %>%
-  summarise
+cute_pal
+
+ggplot(afta_covid_2 %>% filter(budget == "100,000 to  249,999"), aes(x = date, y = furloughed_staff_amt)) +
+  geom_point(na.rm = T)
+
+names(afta_covid_2) 
+# Idea is that orgnizations everywhere are basically feeling the same thing... not as much to do with the prevalance of COVID
+
+# Interactivity: you can click to add a trendline
+
+# tab over panels to see each of these different states
+# choose whether or not to include outliers (states with much higher positive cases)
 ```
 
 
@@ -338,6 +366,8 @@ responses_coded %>%
   gt
 
 afta <- read_excel("raw_data/afta.xlsx")
+
+
 
 ```
 

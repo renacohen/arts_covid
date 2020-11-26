@@ -6,22 +6,24 @@ output: html_document
 ---
 
 ```{r}
+
+library(tidyverse)
+
+afta_covid_2 <- readRDS("~/Desktop/GOV 50/final_project/milestone_4/processed_data/afta_covid_2.RDS")
+
 small <- afta_covid_2 %>%
   filter(budget == "100,000 to  249,999") %>%
   filter(lost_revenue_total > 1) %>%
   mutate(laid_off_total = laid_off_artists_amt + laid_off_staff_amt) %>%
   filter(date < "2020-06-01") %>%
   filter(lost_revenue_total < 600000) %>%
-  # Filtering to get rid of some crazy outlies 
-  filter(lost_attendees < quantile(small$lost_attendees, 0.995, na.rm = T)) %>%
-filter(lost_revenue_total < quantile(small$lost_revenue_total, 0.995, na.rm = T)) 
+  # Filtering to get rid of some crazy outliers 
+  filter(lost_attendees < quantile(lost_attendees, 0.995, na.rm = T)) %>%
+filter(lost_revenue_total < quantile(lost_revenue_total, 0.995, na.rm = T)) 
 
 
 library(rstanarm)
 library(tidymodels)
-
-nrow(small)
-
 
 
 fit_1 <- lm(sqrt(lost_revenue_total)~ lost_attendees, data = small)
@@ -168,6 +170,8 @@ lm_wfl_simple %>%
 
 model_final <- stan_glm(lost_revenue_total ~  lost_attendees, data = small, refresh = 0)
 
+saveRDS(model_final, "model_final.RDS")
+
 library(broom.mixed)
 library(gtsummary)
 
@@ -190,9 +194,11 @@ average <- posterior_epred(model_final, newdata = new_obs) %>%
   rename("Average Predictions" = `1`) %>%
   mutate_all(as.numeric)
 
-cbind(individual, average) %>%
-  pivot_longer(cols = everything(), names_to = "Type", values_to = "lost_rev") %>%
-  ggplot(aes(x = lost_rev, fill = Type)) +
+model_predictions <- cbind(individual, average) %>%
+  pivot_longer(cols = everything(), names_to = "Type", values_to = "lost_rev") 
+
+
+  ggplot(model_predictions, aes(x = lost_rev, fill = Type)) +
   geom_histogram(bins = 50, alpha = 0.7, color = "plum4",
                  position = "identity",
                  aes(y = after_stat(count/sum(count)))) +

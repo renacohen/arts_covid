@@ -14,10 +14,20 @@ library(wordcloud)
 library(tm)
 library(wordcloud2)
 library(gganimate)
-
+library(broom.mixed)
+library(gtsummary)
+#library(rstanarm)
+library(markdown)
 
 ui <- navbarPage(theme = shinytheme("yeti"),
     "The Impact of Coronavirus On Arts Organizations",
+    tabPanel("Explore Data by State",
+             fluidPage(titlePanel("Background and Motivation"),
+                       fluidRow(
+                         
+                         column(6, plotOutput("plot1")),
+                         column(6, plotOutput("plot2"))
+                       ))),
     tabPanel("Explore Data by State",
                  fluidPage(titlePanel("Lost Revenue"),
                  sidebarPanel(selectInput("var2", "State", c("Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
@@ -64,17 +74,15 @@ ui <- navbarPage(theme = shinytheme("yeti"),
              plotOutput("survival_budget"),
              mainPanel(
              h3("Here's a model")),
-             selectInput("orgsize", "Organization Budget", c("Less than  100,000",
-                                                             "100,000 to  249,999",
-                                                             "250,000 to  499,999",
-                                                             "500,000 to  999,999",
-                                                             "1,000,000 to  4,999,999",
-                                                             "5,000,000 to  9,999,999")),
-             plotOutput("plot_rev")),
+             sliderInput("attendees", "Number of Attendees",
+                         min = 0, max = 40000,
+                         value = 0, step = 200,
+             )),
+             #plotOutput("predplot")),
     
     tabPanel("Broadening to Pandemic",
              titlePanel("Relating Arts Organizations to COVID status"),
-             includeHTML("file:///Users/renacohen/Desktop/GOV 50/final_project/animation.html")),
+             #mainPanel(htmlOutput("animation"))),
     tabPanel("Exploring Textual Data",
              titlePanel("Here's some text"),
              wordcloud2Output("cloud"),
@@ -95,5 +103,5 @@ ui <- navbarPage(theme = shinytheme("yeti"),
              p(a("Here is a link to my Github repo!", href = "https://github.com/renacohen/final_project/")),
              h3("About Me"),
              p("My name is Rena Cohen and I study WGS with a secondary in Statistics. 
-             You can reach me at renacohen@college.harvard.edu.")))
+             You can reach me at renacohen@college.harvard.edu."))))
 

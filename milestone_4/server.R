@@ -13,6 +13,7 @@ map_data <- readRDS(file = "processed_data/map_data.RDS")
 word_data <- readRDS("processed_data/word_data.RDS")
 responses_coded <- readRDS("processed_data/responses_coded.RDS")
 unemployment_data <- readRDS("processed_data/unemployment_data.RDS")
+model_final <- readRDS("processed_data/model_final.RDS")
 
 library(shiny)
 library(ggplot2)
@@ -22,6 +23,8 @@ library(ggmap)
 library(gt)
 library(treemap)
 library(gganimate)
+#library(rstanarm)
+library(tidymodels)
 
 shinyServer(function(input, output) {
   
@@ -144,6 +147,7 @@ shinyServer(function(input, output) {
       
     })
     
+    
     output$response_table <- renderTable({
       responses_coded %>%
         filter(Sentiment == input$sentiment) %>%
@@ -152,5 +156,44 @@ shinyServer(function(input, output) {
       
       
     })
+    
+    #output$animation <- renderUI({
+      #includeHTML("animation.html")
+      
+    #})
+    
+   # output$predplot <- renderPlot({
+      
+      #new_obs <- tibble(lost_attendees = input$attendees)
+      
+      #individual <- posterior_predict(model_final, newdata = new_obs) %>%
+        #as_tibble() %>%
+        #rename("Individual Predictions" = `1`) %>%
+        #mutate_all(as.numeric)
+      #average <- posterior_epred(model_final, newdata = new_obs) %>%
+        #as_tibble() %>%
+        #rename("Average Predictions" = `1`) %>%
+        #mutate_all(as.numeric)
+      
+      #model_predictions <- cbind(individual, average) %>%
+        #pivot_longer(cols = everything(), names_to = "Type", values_to = "lost_rev") 
+      
+      
+      #ggplot(model_predictions, aes(x = lost_rev, fill = Type)) +
+        #geom_histogram(bins = 50, alpha = 0.7, color = "plum4",
+                       #position = "identity",
+                       #aes(y = after_stat(count/sum(count)))) +
+        #scale_x_continuous(labels = scales::dollar_format()) +
+        #scale_y_continuous(labels = scales::percent_format())+
+        #labs(title = "Predictions") +
+        #scale_fill_manual(values = cute_pal) + 
+        #theme_bw() +
+        #labs(title = "Posterior Probability Distribution",
+             #subtitle = "Making individual and average predictions using our chosen model", 
+             #x = "Predicted Lost Revenue", y = "Probability")
+    #})
+    
+    
+})    
+    
 
-})

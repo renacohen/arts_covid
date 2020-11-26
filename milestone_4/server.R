@@ -12,6 +12,7 @@ afta_covid_2 <- readRDS(file = "processed_data/afta_covid_2.RDS")
 map_data <- readRDS(file = "processed_data/map_data.RDS")
 word_data <- readRDS("processed_data/word_data.RDS")
 responses_coded <- readRDS("processed_data/responses_coded.RDS")
+unemployment_data <- readRDS("processed_data/unemployment_data.RDS")
 
 library(shiny)
 library(ggplot2)
@@ -20,11 +21,16 @@ library(RColorBrewer)
 library(ggmap)
 library(gt)
 library(treemap)
+library(gganimate)
 
 shinyServer(function(input, output) {
   
   cute_pal <- c("thistle", "lavenderblush2", "lightblue1", "thistle2", 
                 "lightblue3", "azure3", "darkmagenta", "maroon","plum4")
+  
+  col2hex <- function(col, alpha) rgb(t(col2rgb(col)), alpha=alpha, maxColorValue=255)
+  
+  cute_pal_hex <- col2hex(cute_pal)
   
   output$num_org <- renderPlot({
     num_per_day <- afta_covid %>%

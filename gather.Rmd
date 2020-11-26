@@ -371,3 +371,20 @@ afta <- read_excel("raw_data/afta.xlsx")
 
 ```
 
+```{r}
+afta_covid_state <- afta_covid_2 %>%
+  filter(state == "Florida") 
+
+names(afta_covid_2)
+
+sum(afta_covid_state$laid_off_staff_amt, na.rm = T) + sum(afta_covid_state$laid_off_artists_amt, na.rm = T)
+
+afta_covid_gov <- afta_covid_2 %>%
+  group_by(received_financial_assistance) %>%
+  summarise(survival_chances = mean(survival_chances, na.rm = T), .groups = "drop")
+
+
+unique(afta_covid$date)
+View(afta_covid_gov)
+```
+

@@ -1,0 +1,12 @@
+name: afta
+title: afta
+username:
+account: renacohen
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3307477
+bundleId: 3911139
+url: https://renacohen.shinyapps.io/afta/
+when: 1606448102.74947
+asMultiple: FALSE
+asStatic: FALSE

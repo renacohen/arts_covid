@@ -46,7 +46,7 @@ stan_wfl <- workflow() %>%
   add_recipe(recipe(lost_revenue_total ~ lost_attendees, data = small))
 
 stan_metrics <- stan_wfl %>%
-  fit_resamp
+  fit_resampa
 
 names(small)
 ```
@@ -142,18 +142,36 @@ stan_metrics_complex <- lm_wfl_complex %>%
   fit_resamples(resamples = small_folds) %>%
   collect_metrics()
 
-tibble(model = rep(c("Simple Linear Model", "Medium Linear Model",
-                     "Complex Linear Model", "Simple Bayesian Linear Model",
-                     "Medium Bayesian Linear Model", "Complex Bayesian Linear Model"), each = 2)) %>%
+model_comparison <- tibble(model = rep(c("Simple Linear Model", "Medium Linear Model",
+                     "Complex Linear Model"), each = 2)) %>%
   bind_cols(bind_rows(lm_metrics_simple, lm_metrics_medium, 
-                      lm_metrics_complex, stan_metrics_simple,
-                      stan_metrics_medium, stan_metrics_complex)) %>%
-  filter(.metric == "rmse") %>%
-  arrange(mean) %>%
+                      lm_metrics_complex)) %>%
+  filter(.metric ==  "rmse") %>%
   select(model, mean, std_err) %>%
-  rename(Model = model, "Mean RMSE" = mean, "Standard Error" = std_err)
+  rename(Model = model, "Mean RMSE" = mean, "Standard Error" = std_err)  %>%
+  gt()
+
+library(webshot)
+
+saveRDS(model_comparison, "model_comparison.RDS")
+
+model_comparison
 
 # Seems like the simple model is the best
+
+model_vars <- tibble(name = c("lost_attendees",
+                              "cancelled_events", "new_expenditures_amt", "business_closure"," purpose"),
+                     description = c("Total number of people/attendees expected to attend all events that have been canceled", "Indicator of whether an organization had canceled events due to COVID-19", "Estimation of the total amount ofunanticipated expenditures that made as a result of the coronavirus", "Indicator of whether business closure was a major
+                                     financial concern for the organziation", "Organizational purpose (performing arts, museum/gallery, etc.)"),
+                     type = c("numeric, dummy, numeric, dummy, factor"),
+                     simple = c("Yes", "No", "No", "No", "No"),
+                     medium = c("Yes", "No", "No", "No", "Yes"),
+                     complex = c("Yes", "Yes", "Yes", "Yes", "Yes")) %>%
+  rename("Variable name" = name, "Description" = description,
+         "Variable Type" = type, "In Simple Model?" = simple,
+         "In Medium Model?" = medium, "In Complex Model?" = complex)
+
+saveRDS(model_vars, "model_vars.RDS")
 ```
 
 
@@ -175,8 +193,18 @@ saveRDS(model_final, "model_final.RDS")
 library(broom.mixed)
 library(gtsummary)
 
-tbl_regression(model_final, intercept = TRUE) %>%
+model_final %>%
+  gt()
+
+
+  tbl_regression(model_final, intercept = TRUE) %>%
   as_gt()
+  
+  table<- tbl_regression(model_final, intercept = TRUE) %>%
+            as_gt()
+  
+  class(table)
+  class(model_comparison)
 ```
 
 

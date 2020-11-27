@@ -13,7 +13,7 @@ library(lubridate)
 ```
 
 ```{r}
-afta_raw <- as.data.frame(afta_raw)
+
 
 afta_1 <- afta_raw %>%
   
@@ -290,22 +290,27 @@ ggplot(afta_covid_2, aes(x = budget, fill = legal_status)) +
 ```
 
 ```{r}
+library(readxl)
 state_pop <- read_excel("~/Desktop/GOV 50/final_project/raw_data/state_pop.xlsx") %>%
   rename("state" = State) %>%
   mutate(state = str_sub(state, start = 2))
 
 
+afta_covid_2 <- readRDS("~/Desktop/GOV 50/final_project/afta/processed_data/afta_covid_2.RDS")
+
 covid_rates <- inner_join(afta_covid_2, state_pop, by = "state") %>%
   filter(date < "2020-05-14") %>%
-  select(positive, severity_financial_impact, Pop, likelihood_staff_reductions, abbreviation, survival_chances, budget) %>%
+  select(positive, severity_financial_impact, Pop, 
+         likelihood_staff_reductions, abbreviation, survival_chances, budget) %>%
   mutate(pos_rate = positive/Pop) %>%
   group_by(abbreviation) %>%
   filter(budget == "100,000 to  249,999") %>%
-  #filter(pos_rate < 0.004) %>%
   summarise(financial_severity = mean(severity_financial_impact, na.rm = T),
             pos_rate = mean(pos_rate), 
             likelihood_staff_reductions = mean(likelihood_staff_reductions, na.rm = T),
             survival_chances = mean(survival_chances, na.rm = T), .groups = "drop")
+
+saveRDS(covid_rates, "covid_rates.RDS")
 
 ggplot(covid_rates, aes(x = pos_rate, y = financial_severity)) +
   geom_point(alpha = 0) + 

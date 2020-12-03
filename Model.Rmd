@@ -26,7 +26,7 @@ library(rstanarm)
 library(tidymodels)
 
 
-fit_1 <- lm(sqrt(lost_revenue_total)~ lost_attendees, data = small)
+fit_1 <- lm(sqrt(lost_revenue_total)~ lost_attendees + date, data = small) 
 
 plot(fit_1)
 
@@ -45,8 +45,6 @@ stan_wfl <- workflow() %>%
               set_mode("regression")) %>%
   add_recipe(recipe(lost_revenue_total ~ lost_attendees, data = small))
 
-stan_metrics <- stan_wfl %>%
-  fit_resampa
 
 names(small)
 ```
@@ -75,7 +73,7 @@ lm_wfl_medium <- workflow() %>%
   add_model(linear_reg() %>%
             set_engine("lm") %>%
             set_mode("regression")) %>% 
-  add_recipe(recipe(lost_revenue_total ~  lost_attendees + purpose,
+  add_recipe(recipe(lost_revenue_total ~  lost_attendees + purpose + date,
                     data = small_train) %>%
                step_dummy(all_nominal()))
 
@@ -142,6 +140,8 @@ stan_metrics_complex <- lm_wfl_complex %>%
   fit_resamples(resamples = small_folds) %>%
   collect_metrics()
 
+library(gt)
+
 model_comparison <- tibble(model = rep(c("Simple Linear Model", "Medium Linear Model",
                      "Complex Linear Model"), each = 2)) %>%
   bind_cols(bind_rows(lm_metrics_simple, lm_metrics_medium, 
@@ -150,6 +150,8 @@ model_comparison <- tibble(model = rep(c("Simple Linear Model", "Medium Linear M
   select(model, mean, std_err) %>%
   rename(Model = model, "Mean RMSE" = mean, "Standard Error" = std_err)  %>%
   gt()
+
+model_comparison
 
 library(webshot)
 
@@ -188,6 +190,8 @@ lm_wfl_simple %>%
 
 model_final <- stan_glm(lost_revenue_total ~  lost_attendees, data = small, refresh = 0)
 
+print(model_final, digits = 3)
+
 saveRDS(model_final, "model_final.RDS")
 
 library(broom.mixed)
@@ -202,6 +206,12 @@ model_final %>%
   
   table<- tbl_regression(model_final, intercept = TRUE) %>%
             as_gt()
+  
+  model_final_tbl <- tibble("Parameter" = c("Intercept", "lost_attendees", "sigma"),
+                            "Median" = c(29220.803, 1.450, 31490.402),
+                            "MAD_SD" = c(1267.291, 0.212, 0.212))
+  
+  saveRDS(model_final_tbl, "model_final_tbl.RDS")
   
   class(table)
   class(model_comparison)

@@ -293,8 +293,8 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                             While AFTA has not made the raw survey responses available to the public due to 
                             confidentiality reasons, you can learn more about the survey and specific results 
                             on the", a("interactive dashboard on their website.", href = "https://www.americansforthearts.org/by-topic/disaster-preparedness/the-economic-impact-of-coronavirus-on-the-arts-and-culture-sector")),
-                          p("The data on coronavirus cases came from", a("The Covid Tracking Project.", href = "https://covidtracking.com/data/download"),
-                            "The data unemployment data across sectors was reported from the U.S. Bureau of Labor Statistics and can be accessed", a("on their website.", href = "https://data.bls.gov/timeseries/LNU04032241?amp%253bdata_tool=XGtable&output_view=data&include_graphs=true")),
+                            p("The data on coronavirus cases came from", a("The Covid Tracking Project.", href = "https://covidtracking.com/data/download"),
+                              "The data unemployment data across sectors was reported from the U.S. Bureau of Labor Statistics and can be accessed", a("on their website.", href = "https://data.bls.gov/timeseries/LNU04032241?amp%253bdata_tool=XGtable&output_view=data&include_graphs=true")),
                           p("For the code used to create this project, check out my", a("Github Repository.", href = "https://github.com/renacohen/final_project")),
                           br(),
                           h4("About the Cause"),

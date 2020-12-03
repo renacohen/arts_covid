@@ -5,8 +5,8 @@ account: renacohen
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 3307477
-bundleId: 3911139
+bundleId: 3914181
 url: https://renacohen.shinyapps.io/afta/
-when: 1606448102.74947
+when: 1606516046.50607
 asMultiple: FALSE
 asStatic: FALSE

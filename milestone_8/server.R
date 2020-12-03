@@ -7,19 +7,28 @@
 #    http://shiny.rstudio.com/
 #
 
+#
+# This is the server logic of a Shiny web application. You can run the
+# application by clicking 'Run App' above.
+#
+# Find out more about building applications with Shiny here:
+#
+#    http://shiny.rstudio.com/
+#
+
 library(shiny)
 
-afta_covid <- readRDS(file = "processed_data/afta_covid.RDS")
-afta_covid_2 <- readRDS(file = "processed_data/afta_covid_2.RDS")
-map_data <- readRDS(file = "processed_data/map_data.RDS")
-word_data <- readRDS("processed_data/word_data.RDS")
-responses_coded <- readRDS("processed_data/responses_coded.RDS")
-unemployment_data <- readRDS("processed_data/unemployment_data.RDS")
-model_final <- readRDS("processed_data/model_final.RDS")
-covid_rates <- readRDS("processed_data/covid_rates.RDS")
-model_comparison <- readRDS("processed_data/model_comparison.RDS")
-model_vars <- readRDS("processed_data/model_vars.RDS")
-model_final_tbl <- readRDS("processed_data/model_final_tbl.RDS")
+afta_covid <- readRDS(file = "processed_data_copy/afta_covid.RDS")
+afta_covid_2 <- readRDS(file = "processed_data_copy/afta_covid_2.RDS")
+map_data <- readRDS(file = "processed_data_copy/map_data.RDS")
+word_data <- readRDS("processed_data_copy/word_data.RDS")
+responses_coded <- readRDS("processed_data_copy/responses_coded.RDS")
+unemployment_data <- readRDS("processed_data_copy/unemployment_data.RDS")
+model_final <- readRDS("processed_data_copy/model_final.RDS")
+covid_rates <- readRDS("processed_data_copy/covid_rates.RDS")
+model_comparison <- readRDS("processed_data_copy/model_comparison.RDS")
+model_vars <- readRDS("processed_data_copy/model_vars.RDS")
+model_final_tbl <- readRDS("processed_data_copy/model_final_tbl.RDS")
 
 library(shiny)
 library(ggplot2)
@@ -41,26 +50,6 @@ library(gtsummary)
 library(rstanarm)
 library(markdown)
 library(Rcpp)
-
-
-#
-# This is the server logic of a Shiny web application. You can run the
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
-#
-# This is the server logic of a Shiny web application. You can run the
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
 
 
 shinyServer(function(input, output) {

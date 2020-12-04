@@ -1,20 +1,4 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
+# Starting off by loading all my libraries
 
 library(shiny)
 library(shiny)
@@ -30,23 +14,57 @@ library(rstanarm)
 library(markdown)
 library(Rcpp)
 
+# In general my strategy for formatting was: Use fluidRow, alternate which
+# side had plot/tables and which side had text among the rows, and put two 
+# breaks between every row to keep things from looking cluttered.
+
+# Starting off with a navbar Page so that I can get my five main tabs
+
 ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
+                 
+                 # My first tab will allow users to explore survey demographics
+                 # This is also the default tab, which is good, since it's 
+                 # colorful
+                 
                  tabPanel("Explore Survey Demographics",
-                          fluidPage(titlePanel("Explore Survey Demographics"),
+                          
+                          # fluidPage allows for for the possibility of 
+                          # fluidRows, which I basically used to nicely format
+                          # my entire project. It lets you pick how much space
+                          # an element takes up within a row as long as the 
+                          # total amount of space taken up by elements in the 
+                          # row adds to 12
+                          
+                          fluidPage(
+                            titlePanel("Explore Survey Demographics"),
                                     h3("Background and Motivations"),
+                            
+                            # Here's some general background on the project.
+                            # It shoould be the first thing the user reads
+                            
                                     p("In March 2020, Americans for the Arts, the nation’s 
                                     largest arts advocacy organization, launched a 
                                     survey measuring the Economic Impact of Coronavirus 
-                                    on the Arts and Culture Sector. Since then, more than 
-                                    17,000 artists and arts organizations have responded to the survey, 
-                                    providing firsthand insight into a sector that 
-                                    has been especially hard hit by the economic downturn of the COVID-19 pandemic. 
-                                    This project will aim to explore the results of that survey, investigating how COVID-19 has impacted 
-                                      the economic landscape of arts organizations around the nation."),
+                                    on the Arts and Culture Sector. 
+                                    Since then, more than 
+                                    17,000 artists and arts organizations have 
+                                    responded to the survey, 
+                                    providing firsthand insight into a sector 
+                                    that has been especially hard hit by the 
+                                    economic downturn of the COVID-19 pandemic. 
+                                    This project will aim to explore the results 
+                                    of that survey, investigating how COVID-19 
+                                    has impacted the economic landscape of 
+                                      arts organizations around the nation."),
                                     br(),
                                     br(),
+                            
+                            # This row has the lollipop plot that allows the
+                            # user to see when the survey was completed
+                            
                                     fluidRow(
-                                      column(5, h3("When was the survey completed?"),
+                                      column(5, 
+                                             h3("When was the survey completed?"),
                                              p("Americans for the Arts first opened their 
                                                COVID-19 impact survey on March 13th, 2020, 
                                                right as a wave of lockdowns, closures, and 
@@ -58,18 +76,40 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                                                that an organization had lost within the first month or 
                                                so of the pandemic. Use the slider below to explore 
                                                  how many survey responses were garnered in a particular span of time."),
+                                             
+                                             
+                                             # This slider allows the user to 
+                                             # pick the dates for the lollipop
+                                             # plot. The minimum and maximum 
+                                             # are the first and last days I had
+                                             # survey data for. Everything 
+                                             # had to be specified as a date and 
+                                             # given the format "%Y-%m-%d"
+                                             
                                              sliderInput("dates", "Choose a Range of Dates",
                                                          min = as.Date("2020-03-13", "%Y-%m-%d"),
                                                          max = as.Date("2020-09-02", "%Y-%m-%d"), 
                                                          value = c(as.Date("2020-03-13", timeFormat = "%Y-%m-%d"),
                                                                    as.Date("2020-09-02", "%Y-%m-%d")))),
-                                      column(7, plotOutput("num_org"))
+                                      
+                                      # This is the output for the lollipop plot
+                                      
+                                      column(7, 
+                                             plotOutput("num_org"))
                                     ),
                                     br(),
                                     br(),
+                            
+                            # This next section allows users to explore what types of organizations answered the survey
+                            # It also has my treemap
+                
+    
+                            
                                     fluidRow(
-                                      column(7, plotOutput("plot2")),
-                                      column(5, h3("What types of organizations answered the survey?"),
+                                      column(7, 
+                                             plotOutput("plot2")),
+                                      column(5, 
+                                             h3("What types of organizations answered the survey?"),
                                              p("When most people hear the words “arts organizations,” they 
                                                  likely think of theaters, galleries, or museums. While these 
                                                  are important parts of the sector, arts organizations also 
@@ -77,6 +117,9 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                                                  provide networking and financial support, media arts 
                                                  organizations, and community arts centers. Explore what 
                                                  the breakdown of organizations who answered the survey looked like in your state"),
+                                             
+                                            # This is a drop down menu that allows users to choose their state
+                                             
                                              selectInput("var2", "State", c("Alaska", "Arizona", "Arkansas", 
                                                                             "California", "Colorado", "Connecticut",
                                                                             "Florida", "Georgia", "Hawaii", 
@@ -97,26 +140,52 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                                     ),
                                     br(),
                                     br(),
+                            
+                            
+                            # This next row allows users to explore what size and purpose of organization answered
+                            # the survey. It just has one plot and some text
+                            
                                     fluidRow(
                                       
-                                      column(4, h3("What size of organization answered the survey?"),
+                                      column(4, 
+                                             h3("What size of organization answered the survey?"),
                                              p("Arts organizations come in all sizes. While the majority of 
                                                  survey respondents were small nonprofits, several larger organizations
                                                  with self-reported annual budgets of upwards of $10 million responded
                                                  as well. Though they might not suffer the same risks of complete closure 
                                                  like smaller organizations do, these larger organizations also faced major
                                                  financial barriers due to the pandemic, as we will later explore.")),
-                                      column(8, br(),
+                                      column(8, 
+                                             br(),
+                                             
+                                             # This is the barplot that has number of organizations by budget and 
+                                             # filled by legal status
+                                             
                                              plotOutput("plot1"))
                                     ),
                                     br(),
                                     br(),
+                            
+                            
+                            # This last part of the page has an interactive map
+                            
                                     h3("Where were responses from?"),
                                     p("Responses to the coronavirus impact survey came from all over the nation.
                                       Explore the map below to see how many organizations responded in each zip code."),
+                            
+                            # Have to use leafletOutput here
+                            
                                     leafletOutput("map")
                           )),
+                 
+                 
+                 # My second panel is the modeling because this is the crux of
+                 # my project
+                 
                  tabPanel("Modeling Lost Revenue",
+                          
+                          # Here's a general intro to building the model
+                          
                           h2("The Task: Building a Model to Predict Revenue Loss"),
                           p("Understanding the amount of revenue that organizations have lost 
                             due to the pandemic is crucial in formulating relief measures that properly
@@ -126,8 +195,15 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                             $249,000."),
                           br(),
                           br(),
+                          
+                          # This section explains why I chose to focus on smaller
+                          # organizations, with a plot showing that these types
+                          # of organizations are least likely to survive the
+                          # pandemic to help back up my decision
+                          
                           fluidRow(
-                            column(5, h3("Focusing on Smaller Organizations: Rationale"),
+                            column(5, 
+                                   h3("Focusing on Smaller Organizations: Rationale"),
                                    p("As shown on the previous page, organizational budgets ranged 
                             from all volunteer to upwards of $10 million, resulting in a large range
                             of organizational revenue loss. 
@@ -145,13 +221,24 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                             the least likely that they would survive the pandemic, 
                             suggesting a particular need for models to understand 
                             more about how much they were losing and what could be done to help.")),
-                            column(7, br(), plotOutput("survival_budget"))),
+                            column(7, 
+                                   br(), 
+                                   
+                                   # And here's the plot, created in the server
+                                   
+                                   plotOutput("survival_budget"))),
                           br(),
                           br(),
+                          
+                          # This next section explains my three original models, along with
+                          # a table that shows the variables in each
+                          
                           fluidRow(
-                            column(9, tableOutput("var_table")),
-                            column(3, h3("Model Building Process"), p("Initially, I constructed
-                                                                      three different models to predict lost
+                            column(9, 
+                                   tableOutput("var_table")),
+                            column(3, 
+                            h3("Model Building Process"), 
+                            p("Initially, I constructed three different models to predict lost
                                                                       revenue for small arts organizations with three levels
                                                                       of complexity. The simplest model used only one continuous 
                                                                       variable, the number of lost attendees. The medium model incorporated
@@ -169,7 +256,10 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                           br(),
                           fluidRow(
                             
-                            column(8, h3("Model Selection"),
+                            # This row explains how I selected the models and shows a corresponding table
+                            
+                            column(8, 
+                                   h3("Model Selection"),
                                    p("As shown, the medium complexity model had the smallest RMSE,
                                      in cross validation, but it was not significantly different 
                                      enough from the simple model that would indicate the extra 
@@ -189,11 +279,16 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                                      variation in number of responses per day). Because the number of lost attendees naturally
                                      matches with the span of time/method by which individual organizations calculated their lost revenue,
                                      it makes sense that it works effectively as a predictor on its own.")),
-                            column(4, tableOutput("models_table"))),
+                            column(4, 
+                                   tableOutput("models_table"))),
                           br(),
                           br(),
+                          
+                          # This row has a table and interpretation for my final model
+                          
                           fluidRow(
-                            column(7, h3("Interpreting the Final Model"),
+                            column(7, 
+                                   h3("Interpreting the Final Model"),
                                    p("The median of the posterior distribution of estimated revenue 
                                      loss for an organization with 0 lost attendees is $29,220.80, 
                                      suggesting that the pandemic has had a severe economic impact 
@@ -205,22 +300,46 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                                      $31,490, suggesting that there is great variation, with some 
                                      organizations losing next to nothing and others losing over 50% 
                                      of their annual budget (note that this only takes into account the March-May timeframe).")),
-                            column(4, offset = 1, tableOutput("final_mod"))),
+                            column(4, 
+                                   offset = 1, 
+                                   tableOutput("final_mod"))),
                           br(),
                           br(),
+                          
+                          # This row has my lovely histogram that predicts lost 
+                          # revenue for individual and average organizations based 
+                          # on lost attendees
+                          
                           fluidRow(
-                            column(8, plotOutput("pred_plot")),
-                            column(4, h3("Predicting Revenue Loss"),
+                            column(8, 
+                                   plotOutput("pred_plot")),
+                            column(4, 
+                                   h3("Predicting Revenue Loss"),
                                    p("Use the slider below to make predictions about how much
                                      an organization of a budget between $100,000 and $249,000 
                                      with a certain number of lost attendees may have lost in revenue
                                      during the first few months of the pandemic."),
+                                   
+                                   # This slider allows the user to choose the number
+                                   # of lost attendees. It starts at 0 and
+                                   # the user can choose from there in increments
+                                   # of 200
+                                   
                                    sliderInput("attendees", "Number of Attendees",
                                                min = 0, max = 40000,
                                                value = 0, step = 200)))),
+                 
+                 # This panel situates my findings within broader unemployment
+                 # and health trends
+                 
                  tabPanel("In Dialogue with the Pandemic",
+                          
+                          # This row contains some unemployment background
+                          # and my animation
+                          
                           fluidRow(
-                            column(4, h3("Understanding Sector-Wide Impact"),
+                            column(4, 
+                                   h3("Understanding Sector-Wide Impact"),
                                    p("To help put into perspective the widespread,
                                      national economic crisis that COVID-19 has caused 
                                      for arts organizations, take a look at unemployment rates.
@@ -229,15 +348,37 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                                      during the pandemic and have yet to come anywhere close to pre-pandemic
                                      levels. This suggests the need for special relief legislation target specifically
                                      at helping artists and arts organizations.")),
-                            column(8, htmlOutput("animation"))
+                            
+                            # I saved the animation as an html, so used 
+                            # htmlOutput to get it
+                            
+                            column(8, 
+                                   htmlOutput("animation"))
                           ),
+                          
+                          # This row shows how cases didn't seem to have much of an
+                          # impact on financial wellbeing of arts organizations
+                          
                           fluidRow(
-                            column(8, tabsetPanel(
-                              tabPanel("Severity Financial Impact", plotOutput("states_1")), 
-                              tabPanel("Likelihood Staff Reduction", plotOutput("states_2")), 
-                              tabPanel("Chances of Survival", plotOutput("states_3")))
+                            column(8, 
+                                   
+                                   # Within this tab, there's a baby tab that
+                                   # lets you choose which of the three graphs 
+                                   # you want to see
+                                   
+                                   tabsetPanel(
+                              tabPanel("Severity Financial Impact", 
+                                       plotOutput("states_1")), 
+                              tabPanel("Likelihood Staff Reduction", 
+                                       plotOutput("states_2")), 
+                              tabPanel("Chances of Survival", 
+                                       plotOutput("states_3")))
                             ),
-                            column(4, h3("How did statewide case numbers affect arts organizations?"),
+                            
+                            # This text explains that
+                            
+                            column(4, 
+                                   h3("How did statewide case numbers affect arts organizations?"),
                                    p("Did arts organizations around the nation feel the effects
                                    of the pandemic similarly? The answer seems to be yes (at least
                                    for the March-May timeframe, which is what's shown in the plot).
@@ -250,12 +391,24 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                                    economic impact on arts organizations, as shown by the nearly flat trendline,
                                    suggests that programs at the national level could be an effective
                                    way to address this widespread economic hardship.")))),
+                 
+                 
+                 # This panel explores textual responses in the survey via
+                 # a word cloud and a table of written responses
+                 
                  tabPanel("Textual Responses",
+                          
+                          # The word cloud is the first thing you see!
+                          
                           wordcloud2Output("cloud"),
                           br(),
                           br(),
+                          
+                          # This row gives some background on textual responses
+                          
                           fluidRow(
-                            column(5, h3("Beyond Numbers: Stories of the Pandemic's Impact"),
+                            column(5, 
+                                   h3("Beyond Numbers: Stories of the Pandemic's Impact"),
                                    p("At the end of the survey, participants were asked an optional
                                        open response question: Is there anything else you would like to 
                                        share about the impact of COVID-19 on your organization? People
@@ -278,11 +431,20 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                                          responses(organized by theme), you can begin to get a sense of the 
                                          profound impact of COVID-19 on the individuals who help produce art
                                          in this country")),
-                            column(6, offset = 1, h4("Choose a sentiment using the drop down menu below to explore individual
+                            column(6, 
+                            offset = 1, 
+                            h4("Choose a sentiment using the drop down menu below to explore individual
                                            responses to the impact survey"),
+                            
+                            # This drop down menu allows the user to choose their sentiment of response
+                            
                                    selectInput("sentiment", "Sentiment of Response", c("Fear", "Loss", "Resilience",
                                                                                        "Exhaustion")),
                                    tableOutput("response_table")))),
+                 
+                 # Finally, here's my About panel! Not much to say except it uses a 
+                 # lot of links
+                 
                  tabPanel("About",
                           
                           h2("About this Project"),
@@ -292,19 +454,27 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                             survey on 'The Economic Impact of Coronavirus on the Arts and Culture Sector'. 
                             While AFTA has not made the raw survey responses available to the public due to 
                             confidentiality reasons, you can learn more about the survey and specific results 
-                            on the", a("interactive dashboard on their website.", href = "https://www.americansforthearts.org/by-topic/disaster-preparedness/the-economic-impact-of-coronavirus-on-the-arts-and-culture-sector")),
-                          p("The data on coronavirus cases came from", a("The Covid Tracking Project.", href = "https://covidtracking.com/data/download"),
+                            on the", 
+                            a("interactive dashboard on their website.", 
+                              href = "https://www.americansforthearts.org/by-topic/disaster-preparedness/the-economic-impact-of-coronavirus-on-the-arts-and-culture-sector")),
+                          p("The data on coronavirus cases came from", 
+                            a("The Covid Tracking Project.", 
+                              href = "https://covidtracking.com/data/download"),
                             "The data unemployment data across sectors was reported from the U.S. Bureau of Labor Statistics and can be accessed", a("on their website.", href = "https://data.bls.gov/timeseries/LNU04032241?amp%253bdata_tool=XGtable&output_view=data&include_graphs=true")),
-                          p("For the code used to create this project, check out my", a("Github Repository.", href = "https://github.com/renacohen/final_project")),
+                          p("For the code used to create this project, check out my", 
+                            a("Github Repository.", 
+                              href = "https://github.com/renacohen/final_project")),
                           br(),
                           h4("About the Cause"),
                           p("If nothing else, I hope you took away from this project that artists and arts organizations have
                              been devastated by the economic effects of the COVID-19 pandemic. If you are interested in helping this
                              cause, consider reaching out to your local arts organizations, donating to an artist relief fund,
-                             or contacting your representatitive to advocate for the arts using one of the many", a("advocacy tools offered by AFTA.", href = "https://www.americansforthearts.org/advocate")),
+                             or contacting your representatitive to advocate for the arts using one of the many", 
+                            a("advocacy tools offered by AFTA.", href = "https://www.americansforthearts.org/advocate")),
                           br(),
                           h4("Acknowlegements"),
-                          p("First and foremost, I would like to thank my", strong("INCREDIBLE"), "TF Wyatt Hurt, whose patience, kindness, and penchant
+                          p("First and foremost, I would like to thank my", 
+                          strong("INCREDIBLE"), "TF Wyatt Hurt, whose patience, kindness, and penchant
                             for R-related memes gave me the motivation I needed to complete this project. I would also like to thank
                             head GOV-50 TF Tyler Simko for his incredible teaching skills and dedication to providing us all with 
                             such an excellent theoretical and coding background. Finally, I am very thankful to Randy Cohen, director

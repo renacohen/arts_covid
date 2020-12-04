@@ -33,19 +33,41 @@ saveRDS(unemployment_data, file = "unemployment_data.RDS")
 
 
 ```{r, echo = F}
-
+# Making my animation here
 
 unemployment_data %>%
+  
+  # Group and color arguments ensure that each Type of job sector 
+  # is graphed as its own line with its own color
+  
   ggplot(aes(x = date, y = Rate, group = Type, color = Type)) +
+  
+  # I wanted a line plot with points at the different months
+  
   geom_line(lwd = 2) +
   geom_point() +
+  
+  # This will show us trends over time, which is ideally how I wanted the 
+  # animation to look
+  
   transition_reveal(date) +
+  
+  # Choosing the colors for my lines (all colors from cute_pal)
+  
   scale_color_manual(values = c("lightblue3", "darkmagenta", "lightpink2")) +
+  
+  # Labeling the graph; made sure to include a source since this was not
+  # AFTA data
+  
   labs(title = "Unemployment Rate by Sector", 
        subtitle = "Arts and leisure harder hit than most",
        x = "Date", y = "Unemployment Rate",
        caption = "Source: US Bureau of Labor Statistics") +
   theme_bw() +
+  
+  # I wanted the labels to be percentages since we were dealing with unemployment
+  # here
+  
   scale_y_continuous(labels = scales::percent_format())
 
 ```

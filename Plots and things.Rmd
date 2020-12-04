@@ -6,12 +6,24 @@ output: html_document
 ---
 
 ```{r}
+# This is the document where I made the majority of my plots before copy and
+# pasting them into Shiny. I won't comment them out here unless they do 
+# any behind the scenes work that's not already commented in my shiny server
+# (i.e. for the leaflet map and the wordcloud)
+
+# Loading libraries
+
 library(ggplot2)
 library(tidyverse)
+library(wordcloud)
+library(tm)
+library(wordcloud2)
+library(readxl)
 
-afta_covid <- readRDS("~/Desktop/GOV 50/final_project/milestone_4/processed_data/afta_covid.RDS")
+# Reading in the data set
 
-afta_covid
+afta_covid <- readRDS("~/Desktop/GOV 50/final_project/milestones/milestone_4/processed_data/afta_covid.RDS")
+
 num_per_day <- afta_covid %>%
   group_by(date) %>%
   summarise(per_day = n(), .groups = "drop")
@@ -20,7 +32,8 @@ range(num_per_day$date)
 ```
 
 ```{r}
-# This plot allows you to see the number of organizations that answered the survey per day
+# This plot allows you to see the number of organizations that answered 
+# the survey per day
 
 ggplot(num_per_day, aes(x = date, y = per_day)) +
   geom_segment(aes(x = date, xend = date, y = 0, yend = per_day), color = "thistle") +
@@ -28,84 +41,62 @@ ggplot(num_per_day, aes(x = date, y = per_day)) +
   theme_classic() +
   labs(title = "How Many Organizations Answered 
        the Survey Each Day?", x = "Date Survey was Taken", y = "Number of Responses")
-
-
   
 ```
 
-```{r}
-small_orgs <- afta_covid %>%
-  filter(lost_revenue_total < 10000000) %>%
-  filter(lost_attendees < 100000) %>%
-  ggplot(aes(x = lost_attendees, y = lost_revenue_total, na.rm = T)) +
-  geom_point()
 
-
-```
 
 ```{r}
-state_and_size <- afta_covid %>%
-filter(date <= "2020-06-01") %>%
-group_by(state, budget) %>%
-summarise(av_rev_loss = mean(lost_revenue_total, na.rm = T)) %>%
-  filter(budget == "500,000 to  999,999") %>%
-  arrange(av_rev_loss)
+# Making my map (thank you Wyatt for help with this proccess!)
+# Loading the relevant libraries
 
-View(state_and_size)
-
-ggplot(data = state_and_size, aes(x = av_rev_loss)) +
-  geom_histogram(fill = "lightblue", color = "black", na.rm = T)+
-  theme_classic() +
-  labs(title = "Average Lost Revenue", 
-       subtitle = "Choose an organization size",
-       x = "Average Revenue Loss (USD)", y = "Number of States") +
-  geom_vline(xintercept = mean(state_and_size$av_rev_loss,
-                                na.rm = T), color = "maroon", lwd = 1.5, 
-             lty = 4) +
-  geom_text(x = 1.25*mean(state_and_size$av_rev_loss,
-                                na.rm = T), y = 6, label = "Mean lost revenue",
-            color = "maroon")
-
-unique(afta_covid$budget)
-```
-
-```{r}
 library(leaflet)
-
-
 library(readr)
+
+# I needed something that woould turn zip codes into latitude and longitude.
+# Found this dataset online
 
 zips <- read_csv("raw_data/uszips.csv") %>%
   rename("zip_code" = zip) %>%
   select(lat, lng, zip_code)
 
+# Joined my big dataset with the data by zip code
 
 with_zips <- left_join(afta_covid, zips, by = "zip_code")
+
+# I wanted my map to show the number of entries within each zip in order to
+# feed into leaflet
 
 num_zip <- new %>%
   group_by(zip_code) %>%
   summarise(n = n())
 
+# Here's where I saved my data to feed into the leaflet
+
 new_2 <- inner_join(new, num_zip, by = "zip_code")
 View(new_2)
 
-saveRDS(new_2, file = "map_data.RDS")
-maps <- readRDS("map_data")
-View(maps)
+#saveRDS(new_2, file = "map_data.RDS")
+
+# And here's the planning for the leaflet itself
 
 maps <- readRDS()
 
   leaflet(new_2) %>% 
   addProviderTiles(providers$CartoDB.Positron) %>%
   setView(lat = 39.8283, lng = -98.5795, zoom = 4) %>%
-  addCircleMarkers(lng = ~lng, lat = ~lat, weight = 1, color = "darkmagenta", fillColor = "thistle", radius = ~n, fillOpacity = 0.5, label = ~n)
-  
-  ?addCircleMarkers
+  addCircleMarkers(lng = ~lng, lat = ~lat, weight = 1, color = "darkmagenta", 
+                   fillColor = "thistle", radius = ~n, fillOpacity = 0.5, 
+                   label = ~n)
 ```
+
+
+
 ```{r}
 # Here's a nice plot organized by budget and legal status
 
-cute_pal <- c("thistle", "lavenderblush2", "lightblue1", "thistle2", "lightblue3", "azure3", "darkmagenta", "maroon","plum4")
+cute_pal <- c("thistle", "lavenderblush2", "lightblue1", "thistle2", 
+              "lightblue3", "azure3", "darkmagenta", "maroon","plum4")
 afta_covid_2 <- readRDS("~/Desktop/GOV 50/final_project/milestone_4/processed_data/afta_covid_2.RDS")
 afta_covid_2 %>%
   filter(state = ) %>%
@@ -117,21 +108,20 @@ ggplot(afta_covid_2, aes(x = budget, fill = legal_status))  +
   labs(title = "Organizations by Budget and Legal Status",
        subtitle = "Most respondents are nonprofits with smaller budgets",
        x = "Budget", y = "Number of Organizations")
-
-?element_text
-
-?scale_fill_manual()
   
 ```
 
 ```{r}
 # Here's a plot that explains things by type of organization
+
 afta_covid_2 %>%
   filter(state == "Missouri") %>%
 ggplot(aes(x = purpose)) + 
   geom_bar(color = "azure3", fill = "lavenderblush2") +
   theme_classic() +
-  scale_x_discrete(labels = c("Literary \nart", "Local/regional/\nstate arts agency", "Media arts", "Other",
+  scale_x_discrete(labels = c("Literary \nart", 
+                              "Local/regional/\nstate arts agency", "
+                              Media arts", "Other",
   "Performing Arts", "School/\n College / University", "Visual arts/\n Museum")) + 
   theme(axis.text.x = element_text(size = 8)) +
   scale_fill_manual(values = cute_pal, name = "Legal Status") +
@@ -141,92 +131,81 @@ ggplot(aes(x = purpose)) +
 
 ```
 
-```{r}
-states <- afta_covid_2 %>%
-  group_by(state) %>%
-  summarise(financial_severity = mean(severity_financial_impact), .groups = "drop") %>%
-  arrange((state)) %>%
-  mutate(pop)
-
-View(states)
-
-ggplot(states, aes(x = financial_severity, fill = state)) +
-  geom_histogram(binwidth = 0.05) 
-```
 
 ```{r}
-# Here is a word cloud
+# Here is the prep work for my word cloud
 
-library(readxl)
+# Reading in the data of just the written responses
+
 written_responses <- read_excel("raw_data/written_responses.xlsx") %>%
+  
+  # Renaming the column to something shorter
+  
   rename(responses = "OPTIONALIs there anything else you would like to share about the impact of COVID-19 on your organization?") %>%
+  
+  # Filtering to only responses that had words
+  
   filter(!is.na(responses))
 
-saveRDS(written_responses, file = "written_responses.RDS")
-library(wordcloud)
-library(tm)
-library(wordcloud2)
-
-?wordcloud
+# Taking the first 1000 entries, otherwise it was just too much data
 
 responses = c(written_responses$responses[1:1000])
-bad_words = c("m", "we", "will", "our", "Our", "the", "We", "this", "This", "I", "The", "us", "As", "'", "many", "now", "It", "just", "much", "also", ",", "get", "well", "already", "may", "likely", "can", c(stopwords("english")))
+
+# Making a vector of words that I didn't want included in the wordcloud
+# because they were uninteresting
+
+bad_words = c("m", "we", "will", "our", "Our", "the", "We", 
+              "this", "This", "I", "The", "us", "As", "'", "many", 
+              "now", "It", "just", "much", "also", ",", "get", "well", 
+              
+              # stopwords("english") provides a bunch of these words already
+              
+              "already", "may", "likely", "can", c(stopwords("english")))
+
+# Mapping onto each column of responses, removeWords is a function, bad_words
+# are the words we want to remove
+
 responses_no_stopwords <- c(map_chr(responses, removeWords, bad_words)) %>%
+  
+  # Splitting each word of each response into its own element of the vector
+  
   str_split(" ") 
 
-words.freq <- table(unlist(responses_no_stopwords))
-data = cbind.data.frame(names(words.freq),as.integer(words.freq)) %>%
-  slice(-(1:4)) %>%
-  rename("word" = "names(words.freq)", freq = "as.integer(words.freq)") %>%
-  filter(freq > 25) %>%
-  slice(-(1:4))
+# Making a table out of the list of words that automatically
+# gives the number of them with the unlist function
 
-saveRDS(data, file = "word_data.RDS")
+words.freq <- table(unlist(responses_no_stopwords))
+
+# reformating words.freq into a data frame
+
+data = cbind.data.frame(names(words.freq),as.integer(words.freq)) %>%
+  
+  # First four words were junk
+  
+  slice(-(1:4)) %>%
+  
+  # Naming in a way that makes sense to the wordcloud2
+  
+  rename("word" = "names(words.freq)", freq = "as.integer(words.freq)") %>%
+  
+  # We only want high frequency words
+  
+  filter(freq > 25) 
+
+# Saving my RDS
+
+# saveRDS(data, file = "word_data.RDS")
+
+# Building the wordcloud itself
 
 wordcloud2(data = word_data, size = 1, color = c(rep(c("thistle", "darkmagenta", "lightsteelblue", 	"#DDA0DD", "#d9d9d9"), 100)), shape = "circle")
 
-cute_pal
-?fontFamily
-
-col2rgb("lightpink3")
 
 ```
 
+`
 ```{r}
-library(tidyverse)
-
-cute_pal
-
-afta_covid_2 %>%
-  group_by(budget) %>%
-  summarise(survival_chances = mean(survival_chances, na.rm = T), .groups = "drop") 
-
-afta_covid_2 %>%
-  filter(budget != "No budget / all volunteer", budget != "NA") %>%
-  ggplot(aes(x= survival_chances, fill = budget))+
-  geom_bar(na.rm = T, color = "plum4") +
-  
-  # Scales = free keeps us from always having to use the same thing on the Y axis 
-  
-  facet_wrap(~budget, scales = "free") +
-  theme_classic() + 
-  scale_fill_manual(values = c(cute_pal[1:6], "lightblue2")) +
-  # Hiding the legend, it's really not necessary since the fill is just different 
-  # colors
-  theme(legend.position = "none") + 
-  labs(title = "Likelihood of Survival by Organizational Budget",
-       subtitle = "5 is most confident of survival, 1 is least confident", x = "Self-Reported Likelihood of Organization Survival", y = "Number of Organizations")
-```
-
-```{r}
-# Trying to make a treemap here
-col2hex <- function(col, alpha) rgb(t(col2rgb(col)), alpha=alpha, maxColorValue=255)
-
-cute_pal_hex <- col2hex(cute_pal)
-
-cute_pal_hex
-
-library(treemap)
+# Making my treemap. For more info, see my Shiny app
 
 afta_covid_2 %>%
   filter(state = input$state)
@@ -237,35 +216,42 @@ afta_covid_2 %>%
           border.col = "white", 
           title = "Organization Types")
 ```
+
+
 ```{r}
-# attempting an animation
+# Making my graphs at the state level (see Shiny for more info)
 
-library(gganimate)
-library(readr)
-library(ggplot2)
-library(readxl)
-library(tidyverse)
-
-unemployment_data <- read_excel("raw_data/artists_unemployment.xlsx") %>%
-  mutate(date = as.Date(Date)) %>% 
-  mutate(Rate = Rate/100)
-saveRDS(unemployment_data, file = "unemployment_data.RDS")
-
-unemployment_data %>%
-  ggplot(aes(x = date, y = Rate, group = Type, color = Type)) +
-  geom_line(lwd = 2) +
-  geom_point() +
-  transition_reveal(date) +
-  scale_color_manual(values = c("lightblue3", "darkmagenta", "lightpink2")) +
-  labs(title = "Unemployment Rate by Sector", 
-       subtitle = "Arts and leisure harder hit than most",
-       x = "Date", y = "Unemployment Rate",
-       caption = "Source: US Bureau of Labor Statistics") +
+ggplot(covid_rates, aes(x = pos_rate, y = financial_severity)) +
+  geom_point(alpha = 0) + 
+  geom_text(aes(label = abbreviation), color = "plum4") +
+  labs(title = "") +
   theme_bw() +
-  scale_y_continuous(labels = scales::percent_format())
+  geom_smooth(method = "lm", formula = y~x, color = "darkmagenta") +
+  theme_bw() +
+  labs(title = "Average Financial Severity vs. Covid Rates",
+       subtitle = "5 = Most Severe, 1 = Least Severe", 
+       x = "Population Covid Rate",
+       y = "Average Financial Severity")
 
-cute_pal
+ggplot(covid_rates, aes(x = pos_rate, y = likelihood_staff_reductions)) +
+  geom_point(alpha = 0) + 
+  geom_text(aes(label = abbreviation), color = "lightblue3") +
+  geom_smooth(method = "lm", formula = y~x, color = "lightblue4") +
+  theme_bw() +
+  labs(title = "Average Likelihood of Staff Reduction vs. Covid Rates",
+       subtitle = "5 = Most Likely, 1 = Least Likely", 
+       x = "Population Covid Rate",
+       y = "Average Likelihood of Staff Reduction")
 
-View(unemployment_data)
+ggplot(covid_rates, aes(x = pos_rate, y = survival_chances)) +
+  geom_point(alpha = 0) + 
+  geom_text(aes(label = abbreviation), color = "thistle3") +
+  geom_smooth(method = "lm",formula = y~x,  color = "thistle4") +
+  theme_bw() +
+  labs(title = "Average Chance of Organization Survival vs. Covid Rates",
+       subtitle = "5 = Most Likely to Survive, 1 = Least Like", 
+       x = "Population Covid Rate",
+       y = "Average Chance of Organization Survival")
+
 ```
 

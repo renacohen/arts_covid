@@ -254,6 +254,12 @@ model_predictions <- cbind(individual, average) %>%
 ```{r}
 # Setting up graphs to make predictions 
 
-
+cute_pal <- c("thistle", "lavenderblush2", "lightblue1", "thistle2", 
+                "lightblue3", "azure3", "darkmagenta", "maroon","plum4")
+  
+  col2hex <- function(col, alpha) rgb(t(col2rgb(col)), alpha=alpha, maxColorValue=255)
+  
+  cute_pal_hex <- col2hex(cute_pal)
+  cute_pal_hex
 ```
 

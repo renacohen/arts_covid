@@ -6,158 +6,195 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+# Loading my packages
+
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
+library(readr)
+library(readxl)
 
 ```
 
 ```{r}
 
+# This entire code is original data cleaning. There were some things that just 
+# got too complicated in R so I went back and fixed them in excel. It's no
+# longer relevant, but I'm including it just to show that it once existed
 
-afta_1 <- afta_raw %>%
-  
-  # Renaming lots of columns to not the survey questions
-  
-  rename(date = 2, city = 4, state = 5, zip_code = 6, purpose = 7,
-         budget = 9, legal_status = 10, presenter = 12, canceled_events = 13,
-         lost_attendees_1 = 15, lost_attendees_2 = 16, lost_revenue_admissions = 22, 
-         lost_revenue_admissions_amt = 24, lost_revenue_non_admissions=25, 
-         lost_revenue_non_admissions_amt = 27, new_expenditures = 28, 
-         new_expenditures_amt = 29, proj_loss_date = 31, 
-         online_presence = 32, financial_reserves = 33, reduced_payroll = 34, 
-         laid_off_staff = 35, laid_off_artists = 36, laid_off_other = 37, 
-         hiring_freeze = 38, bounce_back_21 = 42, laid_off_staff_amt = 43,
-         furloughed_staff_amt = 44,laid_off_artist_amt = 45,
-         furloughed_artist_amt = 46, laid_off_other_amt = 47,
-         furloughed_other_amt = 48, likelihood_staff_reduction = 50,
-         applied_for_assistance = 51, current_status = 60, concern_late_payment = 61,
-         concern_limited_savings = 62, concern_payroll_inability = 63, 
-         concern_bill_inability = 64, concern_cancelled_contracts = 65, 
-         concern_reduced_donations = 66, concern_business_closure = 67, 
-         financial_impact_severity = 69, survival = 70, reopened = 81, reopening_date = 82,
-         target_reopening_date = 83, reopening_plan = 93) %>%
-
-# remember to merge 15 and 16 at some point, they're the same
-  
-  #removing some irrelevant rows 
-  
-  select(-c(1,3,8,14, 11, 17, 18, 19, 20, 21, 23, 26,29, 30, 39:41, 49, 52:59, 
-            68, 71, 72:75, 76:80, 84:92, 94:ncol(afta_raw))) %>%
-  
-  # Creating my date variable in a usable format
-  
-  mutate(date = mdy_hms(date)) %>%
-  
-  # Chopping off the time survey data on date so that merge will be easier
-  
-  mutate(date = str_sub(date, 1, 10)) %>%
-  mutate(date = ymd(date)) %>%
-  
-  # Shortening Legal Status inputs
-  mutate(nonprofit = ifelse(legal_status == "Nonprofit / private organization (e.g. 501c3)", T, F)) %>%
-
-# Re-fashioning survival to delete extra characters
-
-mutate(survival = str_sub(survival, 1, 1)) %>%
-
-# Same for applied_for_assistance
-  
-  mutate(applied_for_assistance = str_sub(applied_for_assistance, 1, 1)) %>%
-  
-  # Changing a bunch of checkbox variables into true/falses
-  
-  mutate(online_presence = ifelse(is.na(online_presence), F, T)) %>%
-  mutate(financial_reserves = ifelse(is.na(financial_reserves), F, T)) %>%
-  mutate(reduced_payroll = ifelse(is.na(reduced_payroll), F, T)) %>%
-  mutate(laid_off_staff = ifelse(is.na(laid_off_staff), F, T)) %>%
-  mutate(laid_off_artists = ifelse(is.na(laid_off_artists), F, T)) %>%
-  mutate(laid_off_other = ifelse(is.na(laid_off_other), F, T))%>%
-  
-  # Getting rid of the dollar signs in the lost revenue amounts
-  
-   mutate(lost_revenue_admissions_amt = as.numeric(str_sub(lost_revenue_admissions_amt, 2, -1))) %>%
-   mutate(lost_revenue_non_admissions_amt = as.numeric(str_sub(lost_revenue_non_admissions_amt, 2, -1)))
-
-glimpse(afta_1$lost_attendees_1)
-glimpse(afta_raw$)
-
-# Playing around
-  test <- afta_1 %>%
-  filter(!is.na(lost_revenue_admissions_amt)) %>%
-    mutate(lost_revenue_admissions_amt = str_sub(lost_revenue_admissions_amt, 2, -1)) %>%
-    mutate(lost = as.numeric(lost_revenue_admissions_amt)) %>%
-    filter(!is.na(lost))
-  
-  
-  
-test$lost
-    
-    mutate(lost_revenue_admissions_amt = as.numeric(lost_revenue_admissions_amt))
-  
-  View(test)
-  
-  ggplot(test, aes(x = lost, fill = survival)) +
-    geom_histogram(bins = 15) +
-    xlim(0,1000000) +
-    ylim(0,300) +
-    facet_wrap(~survival)
-    
-  
-  saveRDS(afta_1, file = "afta_1.RDS")
-  
-  afta_1 <- readRDS("afta_1.RDS")
-  
-View(afta_1)
-test2<- test %>%
-  filter(!is.na(likelihood_staff_reduction))
-dim(test2)
-test2$likelihood_staff_reduction
-ggplot(test, )
+# afta_1 <- afta_raw %>%
+#   
+#   # Renaming lots of columns to not the survey questions
+#   
+#   rename(date = 2, city = 4, state = 5, zip_code = 6, purpose = 7,
+#          budget = 9, legal_status = 10, presenter = 12, canceled_events = 13,
+#          lost_attendees_1 = 15, lost_attendees_2 = 16, lost_revenue_admissions = 22, 
+#          lost_revenue_admissions_amt = 24, lost_revenue_non_admissions=25, 
+#          lost_revenue_non_admissions_amt = 27, new_expenditures = 28, 
+#          new_expenditures_amt = 29, proj_loss_date = 31, 
+#          online_presence = 32, financial_reserves = 33, reduced_payroll = 34, 
+#          laid_off_staff = 35, laid_off_artists = 36, laid_off_other = 37, 
+#          hiring_freeze = 38, bounce_back_21 = 42, laid_off_staff_amt = 43,
+#          furloughed_staff_amt = 44,laid_off_artist_amt = 45,
+#          furloughed_artist_amt = 46, laid_off_other_amt = 47,
+#          furloughed_other_amt = 48, likelihood_staff_reduction = 50,
+#          applied_for_assistance = 51, current_status = 60, concern_late_payment = 61,
+#          concern_limited_savings = 62, concern_payroll_inability = 63, 
+#          concern_bill_inability = 64, concern_cancelled_contracts = 65, 
+#          concern_reduced_donations = 66, concern_business_closure = 67, 
+#          financial_impact_severity = 69, survival = 70, reopened = 81, reopening_date = 82,
+#          target_reopening_date = 83, reopening_plan = 93) %>%
+# 
+# # remember to merge 15 and 16 at some point, they're the same
+#   
+#   #removing some irrelevant rows 
+#   
+#   select(-c(1,3,8,14, 11, 17, 18, 19, 20, 21, 23, 26,29, 30, 39:41, 49, 52:59, 
+#             68, 71, 72:75, 76:80, 84:92, 94:ncol(afta_raw))) %>%
+#   
+#   # Creating my date variable in a usable format
+#   
+#   mutate(date = mdy_hms(date)) %>%
+#   
+#   # Chopping off the time survey data on date so that merge will be easier
+#   
+#   mutate(date = str_sub(date, 1, 10)) %>%
+#   mutate(date = ymd(date)) %>%
+#   
+#   # Shortening Legal Status inputs
+#   mutate(nonprofit = ifelse(legal_status == "Nonprofit / private organization (e.g. 501c3)", T, F)) %>%
+# 
+# # Re-fashioning survival to delete extra characters
+# 
+# mutate(survival = str_sub(survival, 1, 1)) %>%
+# 
+# # Same for applied_for_assistance
+#   
+#   mutate(applied_for_assistance = str_sub(applied_for_assistance, 1, 1)) %>%
+#   
+#   # Changing a bunch of checkbox variables into true/falses
+#   
+#   mutate(online_presence = ifelse(is.na(online_presence), F, T)) %>%
+#   mutate(financial_reserves = ifelse(is.na(financial_reserves), F, T)) %>%
+#   mutate(reduced_payroll = ifelse(is.na(reduced_payroll), F, T)) %>%
+#   mutate(laid_off_staff = ifelse(is.na(laid_off_staff), F, T)) %>%
+#   mutate(laid_off_artists = ifelse(is.na(laid_off_artists), F, T)) %>%
+#   mutate(laid_off_other = ifelse(is.na(laid_off_other), F, T))%>%
+#   
+#   # Getting rid of the dollar signs in the lost revenue amounts
+#   
+#    mutate(lost_revenue_admissions_amt = as.numeric(str_sub(lost_revenue_admissions_amt, 2, -1))) %>%
+#    mutate(lost_revenue_non_admissions_amt = as.numeric(str_sub(lost_revenue_non_admissions_amt, 2, -1)))
+# 
+# glimpse(afta_1$lost_attendees_1)
+# glimpse(afta_raw$)
+# 
+# # Playing around
+#   test <- afta_1 %>%
+#   filter(!is.na(lost_revenue_admissions_amt)) %>%
+#     mutate(lost_revenue_admissions_amt = str_sub(lost_revenue_admissions_amt, 2, -1)) %>%
+#     mutate(lost = as.numeric(lost_revenue_admissions_amt)) %>%
+#     filter(!is.na(lost))
+#   
+#   
+#   
+# test$lost
+#     
+#     mutate(lost_revenue_admissions_amt = as.numeric(lost_revenue_admissions_amt))
+#   
+#   # View(test)
+#   # 
+#   # ggplot(test, aes(x = lost, fill = survival)) +
+#   #   # geom_histogram(bins = 15) +
+#   #   xlim(0,1000000) +
+#   #   ylim(0,300) +
+#   #   facet_wrap(~survival)
+#   #   
+#   
+#   saveRDS(afta_1, file = "afta_1.RDS")
+#   
+#   afta_1 <- readRDS("afta_1.RDS")
+#   
+# View(afta_1)
+# test2<- test %>%
+#   filter(!is.na(likelihood_staff_reduction))
+# dim(test2)
+# test2$likelihood_staff_reduction
+# ggplot(test, )
   
 ```
 
 
 ```{r}
-# Exploring our COVID data
+# Data wrangling foor my data on coronavirus
 
 covid <- read_csv("raw_data/covid.csv")
+
 covid_cleaner <- covid %>%
+  
+  # Selecting the relevant variables to include in my data set
+  
   select(date, state, deathIncrease, positiveIncrease, death, positive) %>%
+  
+  # Formatting dates properly so they can merge later
+  
   mutate(date = ymd(date)) %>%
+  
+  # The state column was actually an abbreviaton; states are the full names, 
+  # which I will keep consistent across my data sets
+  
   rename(abbreviation = state)
+
+# I needed to get the actual state names into the covid data in order to merge
+# it was AFTA data, so I loaded in the names here
 
 state_abbreviations <- read_csv("raw_data/state_abbreviations.csv")
 state_abbreviations_new <- state_abbreviations %>%
+  
+  # Just renaming the columns to keep everything consistent once again
+  
   rename(abbreviation = 3, state = 2)
 
+# Merging the covid data and the states data
+
 covid_states_merge <- inner_join(state_abbreviations_new, covid_cleaner, by = "abbreviation") %>%
-  select(date, state, deathIncrease, positiveIncrease, abbreviation, death, positive)
+  select(date, state, deathIncrease, positiveIncrease, abbreviation, 
+         death, positive)
 
-
-
+# Now we have COVID-19 data for every state on every day with abbreviations too!
 
 
 ```
 
 
 ```{r}
-library(readxl)
-afta_data_new <- read_excel("raw_data/afta_data_new_columns.xlsx", col_types = c("text", "text",
-                            "text", "text", "text", "text", "text", "text", "text",
-                            "text", "numeric", "text", "numeric", "text", "numeric", "text", 
+# This is where I cleaned the actual survey data. I renamed the columns
+# directly in excel because they were hideously long (a lot of them were
+# question names) and it was just simpler than trying to do it in R
+
+# I made sure the columns were read in correctly by comparing manually
+# with the excel spreadsheet as I went
+
+afta_data_new <- read_excel("raw_data/afta_data_new_columns.xlsx", 
+                            col_types = c("text", "text",
+                            "text", "text", "text", "text", "text", "text", 
+                            "text","text", "numeric", "text", "numeric", 
+                            "text", "numeric", "text", 
                             "numeric", "text", "text", "text", "text", "text",
-                            "text", "skip", "text", "numeric", "numeric", "numeric", 
-                            "numeric", "numeric", "text", "text", "text", "text",
-                            "text", "text", "text",  "text",  "text", "numeric", 
-                            "skip", "skip", "skip", "skip", "skip", "skip", "skip"))
+                            "text", "skip", "text", "numeric", "numeric", 
+                            "numeric", "numeric", "numeric", "text", 
+                            "text", "text", "text",
+                            "text", "text", "text",  "text",  "text",
+                            "numeric", "skip", "skip", "skip", "skip", 
+                            "skip", "skip", "skip"))
 
 
 # Cleaning some data now that it's read in 
 
 # Adding in that one survival row that I forgot before
 
-survival_data <- read_excel("raw_data/survival_data.xlsx", col_types = c("numeric")) %>%
+survival_data <- read_excel("raw_data/survival_data.xlsx", 
+                            col_types = c("numeric")) %>%
   select(survival_chances)
 
 # I will begin by formatting the dates properly. Here are the survey dates
@@ -170,7 +207,6 @@ afta_data_clean <- afta_data_new %>%
   # Next, I have a ton of variables that would work best as logicals, so I will 
   # format them as such using mutate
   
-  
   mutate(used_financial_reserves = ifelse(is.na(used_financial_reserves), F, T)) %>%
   mutate(reduced_salaries = ifelse(is.na(reduced_salaries), F, T)) %>%
   mutate(laid_off_staff = ifelse(is.na(laid_off_staff), F, T)) %>%
@@ -178,218 +214,180 @@ afta_data_clean <- afta_data_new %>%
   mutate(hiring_freeze = ifelse(is.na(hiring_freeze), F, T)) %>%
   mutate(late_payments = ifelse(is.na(late_payments), F, T)) %>%
   mutate(limited_savings = ifelse(is.na(limited_savings), F, T)) %>%
-  mutate(inability_making_payroll = ifelse(is.na(inability_making_payroll), F, T)) %>%
-  mutate(inability_paying_bills = ifelse(is.na(inability_paying_bills), F, T)) %>%
+  mutate(inability_making_payroll = ifelse(is.na(
+    inability_making_payroll), F, T)) %>%
+  mutate(inability_paying_bills = ifelse(is.na(
+    inability_paying_bills), F, T)) %>%
   mutate(cancelled_contracts = ifelse(is.na(cancelled_contracts), F, T)) %>%
   mutate(business_closure = ifelse(is.na(business_closure), F, T))  %>%
   mutate(reduced_philanthropy = ifelse(is.na(`Reduced philanthropic giving:Which of the following are currently major financial concerns for your organization? (Check all that apply.)`), F, T)) %>%
-  mutate(increase_online_presence = ifelse(is.na(increase_online_presence), F, T)) %>%
+  mutate(increase_online_presence = ifelse
+         (is.na(increase_online_presence), F, T)) %>%
   select(-"Reduced philanthropic giving:Which of the following are currently major financial concerns for your organization? (Check all that apply.)") %>%
 
-# Adding a variable that takes the total lost revenue
+# Adding a variable that takes the total lost revenue 
 
   mutate(lost_revenue_total = lost_revenue_admissions_amt + lost_revenue_non_admissions_amt) %>%
+  
+  # Adding in that one row that I forgot earlier
+  
   cbind(survival_data)
 
+# Merging our AFTA data and our COVID data. State and date are both in the 
+# correct format to allow us to do so. A left_join alsoo probably would have 
+# worked here
 
-# The data is more or less clean now. Time to start adding interesting new variables that
-# can maybe be seen over time! 
+afta_covid <- inner_join(covid_states_merge, 
+                         afta_data_clean, by = c("state", "date"))
 
-
-```
-
-
-```{r}
-# Merging our AFTA data and our COVID data
-
-afta_covid <- inner_join(covid_states_merge, afta_data_clean, by = c("state", "date")) 
-
-smaller_afta_covid <- afta_covid %>%
-  group_by(state) %>%
-  summarise(num = n(), )
-
-
-
-big_states <- afta_covid %>%
-  group_by(state) %>%
-  summarise(closures = mean(business_closure), financial_impact = mean(severity_financial_impact))
-
-ggplot(big_states, aes(x = closures, y = financial_impact))+
-  geom_point()
-```
-
-
-```{r}
-# did organizations feel things immediately, or did mean financial impact increase over time?
-
-dates <- afta_covid %>%
-  group_by(date) %>%
-  summarise(number_respondents = n())
-
-ggplot(dates, aes(x = date, y = number_respondents)) +
-  geom_point()
-
-
-org_size <- afta_covid %>%
-  group_by(budget) %>%
-  summarise(mean_rev_lost= mean(lost_revenue_total, na.rm = T)) 
-
-# Here I'm making my RDS
+# Saving my initial clean data as an RDS
 
 saveRDS(afta_covid, file = "afta_covid.RDS")
-read_rds(afta_covid)
-View(afta_covid)
-
-afta_1 <- readRDS("~/Desktop/GOV 50/final_project/afta_1.RDS")
-View(afta_1)
-
-ggplot(afta_covid, aes(y = lost_revenue_total, fill = fct_reorder(budget, lost_revenue_total, .fun = "mean", na.rm = T)))+
-  geom_boxplot() +
-  ylim(0, 1000000) +
-  labs(title = "Lost Revenue due to COVID in Arts Organizations of Different Sizes",
-       x = "", y = "Total Lost Revenue") +
-  scale_fill_discrete(name = "Organization Budget") 
-
-
 ```
 
 ```{r}
-unique(afta_covid$purpose)
+# Once I figured out exactly what plots I wanted to make in my Shiny app,
+# I had to go back in and do a bit more cleaning. This was mostly to replace
+# long answers to survey questions with shorter ones
 
-
-afta_covid_2 <- readRDS("~/Desktop/GOV 50/final_project/milestone_4/processed_data/afta_covid.RDS") %>%
-  mutate(purpose = case_when(purpose == "Performing arts organization (e.g., dance, music, theater, presenter)" | purpose == "Performing arts (e.g., dance, music, theater, presenter)" ~ "Performing Arts",
-                             purpose == "Visual arts organization / museum / exhibit" | purpose == "Visual arts / exhibition / museum" ~ "Visual arts / Museum",
-                             purpose == "Regional arts organization" | purpose == "Local arts agency (city, county, multi-county region)" | purpose == "State arts agency" ~ "Local/regional/state arts agency",
-                             purpose == "School / college / university" ~ "School / college / university",
-                             purpose == "Media arts organization / film / video" | purpose == "Media arts / film / video" ~ "Media Arts", 
-                             purpose == "Literary arts organization" ~ "Literary art",
+afta_covid_2 <- readRDS("~/Desktop/GOV 50/final_project/milestones/milestone_4/processed_data/afta_covid.RDS") %>%
+  
+  # Turning the types of organizations into easier categories to understand
+  # I combined a couple categories that were the same on the survey except
+  # for wording  
+  
+  mutate(purpose = case_when(purpose == "Performing arts organization 
+                             (e.g., dance, music, theater, presenter)" | 
+                               purpose == "Performing arts (e.g., 
+                             dance, music, theater, presenter)" ~ "Performing Arts",
+                             purpose == "Visual arts organization / 
+                             museum / exhibit" | 
+                             purpose == "Visual arts 
+                             / exhibition / museum" ~ "Visual arts / Museum",
+                             purpose == "Regional arts organization" | 
+                               purpose == "Local arts agency (city, 
+                             county, multi-county region)" | 
+                               purpose == "State arts agency" ~ 
+                               "Local/regional/state arts agency",
+                             purpose == "School / college / university" ~ 
+                               "School / college / university",
+                             purpose == "Media arts organization / film / video" | 
+                               purpose == "Media arts / film / video" ~ 
+                               "Media Arts", 
+                             purpose == "Literary arts organization" ~ 
+                               "Literary art",
+                             
+                             # All of the other miscellaneous types of orgs
+                             # went to OTHER. This ended up being a pretty 
+                             # substantial category though!
+                             
                              TRUE ~ "Other")) %>%
-  mutate(budget = fct_relevel(budget,"No budget / all volunteer" , "Less than  100,000", "100,000 to  249,999", "250,000 to  499,999", "500,000 to  999,999", "1,000,000 to  4,999,999", "5,000,000 to  9,999,999", "10,000,000 or more")) %>%
-  mutate(legal_status = case_when(legal_status == "Nonprofit / private organization (e.g. 501c3)" | 
-                                    legal_status == "Nonprofit / private organization" ~ "Nonprofit",
-                                  legal_status == "For-profit / commercial business" | legal_status ==
+  
+  # Budget is in categories, but those categories have levels because they
+  # relate to dollar amounts. In order to save myself some time on graphs
+  # later, I manually releveled them here
+  
+  mutate(budget = fct_relevel(budget,"No budget / all volunteer" , 
+                              "Less than  100,000", "100,000 to  249,999", 
+                              "250,000 to  499,999", "500,000 to  999,999", 
+                              "1,000,000 to  4,999,999", 
+                              "5,000,000 to  9,999,999", 
+                              "10,000,000 or more")) %>%
+  
+  # Legal_status was a similar deal to purpose; too many categories with names
+  # too long that too often overlapped. Once again, I used a case_when
+  
+  mutate(legal_status = case_when(legal_status == 
+                                    "Nonprofit / private organization (e.g. 501c3)" | 
+                                    legal_status == 
+                                    "Nonprofit / private organization" ~ 
+                                    "Nonprofit",
+                                  legal_status ==
+                                    "For-profit / commercial business" | 
+                                    legal_status ==
                                     "For-profit business" ~ "For-profit business", 
-                                  legal_status == "Government entity" | legal_status == "Government department / division / program / facility" ~ "Government entity",
-                                  legal_status == "Unincorporated / volunteer" ~ "Unincorporated / volunteer",
+                                  legal_status == "Government entity" | 
+                                    legal_status == "Government department / 
+                                  division / program / facility" ~ 
+                                    "Government entity",
+                                  legal_status == 
+                                    "Unincorporated / volunteer" ~ 
+                                    "Unincorporated / volunteer",
                                   TRUE ~ "Other"))
 
-
+# Saving this new data as an additional RDs
 
 
 saveRDS(afta_covid_2, file = "afta_covid_2.RDS")
-read_rds(afta_covid_2)
-
-
-ggplot(afta_covid_2, aes(x = budget, fill = legal_status)) + 
-  geom_bar()
-
-
-
 
 ```
 
 ```{r}
-library(readxl)
+# A bit later, I decided that for one of my graphs, I wanted COVID-19
+# rates, not just the raw number of cases (wanted to compare states on
+# an even playing field so to speak). Since I already had case numbers by
+# day and state in my large data set, I figured the easiest thing to do 
+# would be to merge in a population column and then calculate rates
+
+# Here's some data with state populations as of 2019
+
 state_pop <- read_excel("~/Desktop/GOV 50/final_project/raw_data/state_pop.xlsx") %>%
   rename("state" = State) %>%
+  
+  # There was a weird period in front of all the states when I read them in.
+  # Starting at the 2nd character will get rid of that
+  
   mutate(state = str_sub(state, start = 2))
 
-
-afta_covid_2 <- readRDS("~/Desktop/GOV 50/final_project/afta/processed_data/afta_covid_2.RDS")
+# Next I wanted to join this with the AFTA data and get it in a usable form 
+# in order to make the graph 
 
 covid_rates <- inner_join(afta_covid_2, state_pop, by = "state") %>%
+  
+  # I only wanted responses before mid-May since that's when the bulk 
+  # of the survey occurred 
+  
   filter(date < "2020-05-14") %>%
+  
+  # I selected relevant variables for this graph
+  
   select(positive, severity_financial_impact, Pop, 
          likelihood_staff_reductions, abbreviation, survival_chances, budget) %>%
+  
+  # Here's a new variable that takes the positive case rate for the time of each
+  # survey response by dividing the state's total number of positive cases up
+  # to that point by the state's total population
+  
   mutate(pos_rate = positive/Pop) %>%
+  
+  # Grouping by abbreviation is the same as grouping by state here
+  
   group_by(abbreviation) %>%
+  
+  # Filtering to focus on the group that I built my model for (small orgs)
+  
   filter(budget == "100,000 to  249,999") %>%
+  
+  # Summarizing data on a state level in order to make my three graphs
+  
   summarise(financial_severity = mean(severity_financial_impact, na.rm = T),
             pos_rate = mean(pos_rate), 
-            likelihood_staff_reductions = mean(likelihood_staff_reductions, na.rm = T),
-            survival_chances = mean(survival_chances, na.rm = T), .groups = "drop")
+            likelihood_staff_reductions = mean(likelihood_staff_reductions, 
+                                               na.rm = T),
+            survival_chances = mean(survival_chances, na.rm = T), 
+            .groups = "drop")
 
-saveRDS(covid_rates, "covid_rates.RDS")
+# Saving this particular RDS for use in my Shiny app
 
-ggplot(covid_rates, aes(x = pos_rate, y = financial_severity)) +
-  geom_point(alpha = 0) + 
-  geom_text(aes(label = abbreviation), color = "plum4") +
-  labs(title = "") +
-  theme_bw() +
-  geom_smooth(method = "lm", formula = y~x, color = "darkmagenta") +
-  theme_bw() +
-  labs(title = "Average Financial Severity vs. Covid Rates",
-       subtitle = "5 = Most Severe, 1 = Least Severe", 
-       x = "Population Covid Rate",
-       y = "Average Financial Severity")
-
-ggplot(covid_rates, aes(x = pos_rate, y = likelihood_staff_reductions)) +
-  geom_point(alpha = 0) + 
-  geom_text(aes(label = abbreviation), color = "lightblue3") +
-  geom_smooth(method = "lm", formula = y~x, color = "lightblue4") +
-  theme_bw() +
-  labs(title = "Average Likelihood of Staff Reduction vs. Covid Rates",
-       subtitle = "5 = Most Likely, 1 = Least Likely", 
-       x = "Population Covid Rate",
-       y = "Average Likelihood of Staff Reduction")
-
-ggplot(covid_rates, aes(x = pos_rate, y = survival_chances)) +
-  geom_point(alpha = 0) + 
-  geom_text(aes(label = abbreviation), color = "thistle3") +
-  geom_smooth(method = "lm",formula = y~x,  color = "thistle4") +
-  theme_bw() +
-  labs(title = "Average Chance of Organization Survival vs. Covid Rates",
-       subtitle = "5 = Most Likely to Survive, 1 = Least Like", 
-       x = "Population Covid Rate",
-       y = "Average Chance of Organization Survival")
-
-cute_pal
-
-ggplot(afta_covid_2 %>% filter(budget == "100,000 to  249,999"), aes(x = date, y = furloughed_staff_amt)) +
-  geom_point(na.rm = T)
-
-names(afta_covid_2) 
-# Idea is that orgnizations everywhere are basically feeling the same thing... not as much to do with the prevalance of COVID
-
-# Interactivity: you can click to add a trendline
-
-# tab over panels to see each of these different states
-# choose whether or not to include outliers (states with much higher positive cases)
 ```
 
 
 ```{r}
-library(readxl)
+# Reading in my sentiment data, which I decided to add more last minute
+
 responses_coded <- read_excel("raw_data/responses_coded.xlsx")
 saveRDS(responses_coded, "responses_coded.RDS")
 
-library(gt)
-responses_coded %>%
-  #filter(Sentiment == ) %>%
-  select(Comment) %>%
-  gt
-
-afta <- read_excel("raw_data/afta.xlsx")
-
-
-
 ```
 
-```{r}
-afta_covid_state <- afta_covid_2 %>%
-  filter(state == "Florida") 
-
-names(afta_covid_2)
-
-sum(afta_covid_state$laid_off_staff_amt, na.rm = T) + sum(afta_covid_state$laid_off_artists_amt, na.rm = T)
-
-afta_covid_gov <- afta_covid_2 %>%
-  group_by(received_financial_assistance) %>%
-  summarise(survival_chances = mean(survival_chances, na.rm = T), .groups = "drop")
-
-
-unique(afta_covid$date)
-View(afta_covid_gov)
-```
 

@@ -68,9 +68,9 @@ shinyServer(function(input, output) {
   cute_pal <- c("thistle", "lavenderblush2", "lightblue1", "thistle2", 
                 "lightblue3", "azure3", "darkmagenta", "maroon","plum4")
   
-  col2hex <- function(col, alpha) rgb(t(col2rgb(col)), alpha=alpha, maxColorValue=255)
   
-  cute_pal_hex <- col2hex(cute_pal)
+  cute_pal_hex <- c("#D8BFD8", "#EEE0E5", "#BFEFFF", "#EED2EE", "#9AC0CD", 
+                    "#C1CDCD", "#8B008B", "#B03060", "#8B668B")
   
   output$num_org <- renderPlot({
     num_per_day <- afta_covid %>%

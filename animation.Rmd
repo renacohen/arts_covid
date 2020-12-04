@@ -5,20 +5,36 @@ date: ""
 output: html_document
 ---
 ```{r, include = F}
+# Loading relevant libraries (gganimate is the most unusual one since
+# this is where I made my animation)
+
 library(gganimate)
 library(readr)
 library(ggplot2)
 library(readxl)
 library(tidyverse)
 
+# Reading in some data that's specific to this animation
+
 unemployment_data <- read_excel("raw_data/artists_unemployment.xlsx") %>%
+  
+  # I needed the date to be properly formatted, thankfully wasn't too hard
+  
   mutate(date = as.Date(Date)) %>% 
+  
+  # I wanted the rate in percentages, so had to divide by 100
+  
   mutate(Rate = Rate/100)
+
+# Saving this RDS to use in my animation
+
 saveRDS(unemployment_data, file = "unemployment_data.RDS")
 ```
 
 
 ```{r, echo = F}
+
+
 unemployment_data %>%
   ggplot(aes(x = date, y = Rate, group = Type, color = Type)) +
   geom_line(lwd = 2) +

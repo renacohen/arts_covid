@@ -6,61 +6,69 @@ output: html_document
 ---
 
 ```{r}
+# Here is the proccess I used to build and fit my model!
+
+# Loading relevant libraries
 
 library(tidyverse)
-
-afta_covid_2 <- readRDS("~/Desktop/GOV 50/final_project/milestone_4/processed_data/afta_covid_2.RDS")
-
-small <- afta_covid_2 %>%
-  filter(budget == "100,000 to  249,999") %>%
-  filter(lost_revenue_total > 1) %>%
-  mutate(laid_off_total = laid_off_artists_amt + laid_off_staff_amt) %>%
-  filter(date < "2020-06-01") %>%
-  filter(lost_revenue_total < 600000) %>%
-  # Filtering to get rid of some crazy outliers 
-  filter(lost_attendees < quantile(lost_attendees, 0.995, na.rm = T)) %>%
-filter(lost_revenue_total < quantile(lost_revenue_total, 0.995, na.rm = T)) 
-
-
 library(rstanarm)
 library(tidymodels)
+library(gt)
+library(webshot)
+library(broom.mixed)
+library(gtsummary)
+```
 
 
-fit_1 <- lm(sqrt(lost_revenue_total)~ lost_attendees + date, data = small) 
+```{r}
+# Loading the dataset I used to build my model
 
-plot(fit_1)
-
-summary(fit_1)
-
-hist(sqrt(small$lost_revenue_total))
-
-names(afta_covid_2)
-
-mean(small$laid_off_staff)
-mean(small$laid_off_artists_amt, na.rm = T)
-
-stan_wfl <- workflow() %>%
-  add_model(linear_reg() %>%
-              set_engine("stan") %>%
-              set_mode("regression")) %>%
-  add_recipe(recipe(lost_revenue_total ~ lost_attendees, data = small))
+afta_covid_2 <- readRDS("~/Desktop/GOV 50/final_project/milestones/milestone_4/processed_data/afta_covid_2.RDS")
 
 
-names(small)
+# I chose to build a model to predict revenue for small organizations (see
+# my justification in the Shiny app)
+# I made a new data frame to help with this
+
+small <- afta_covid_2 %>%
+  
+  # Filtering to include small organizations that had lost revenue
+  
+  filter(budget == "100,000 to  249,999") %>%
+  filter(lost_revenue_total > 1) %>%
+  
+  # Filtering to include responses from the first month of the pandemic
+  
+  filter(date < "2020-06-01") %>%
+  
+  # Filtering to get rid of some crazy outliers (doesn't really make sense
+  # for an organization with a yearly budget of $250,000 would lose more than
+  # 600,000 in a month)
+  
+  filter(lost_revenue_total < 600000) %>%
+  filter(lost_attendees < quantile(lost_attendees, 0.995, na.rm = T)) %>%
+filter(lost_revenue_total < quantile(lost_revenue_total, 0.995, na.rm = T))
 ```
 
 ```{r}
 # Time to do some model building! 
 
-# Setting seed and splitting into test and train
+# Setting seed so that my data is replicable
 
 set.seed(10)
+
+# We typically use an 80-20 split
+
 small_split <- initial_split(small, prop = 0.8)
 small_train <- training(small_split)
 small_test <- testing(small_split)
+
+# Splitting the training data further to do 10-fold CV
+
 small_folds <- vfold_cv(small_train, v = 10)
 
-# Fitting the simplest possible model: lost revenue vs. lost attendees on the training set
+# Fitting the simplest possible model: lost revenue vs. lost attendees 
+# on the training set
 
 lm_wfl_simple <- workflow() %>% 
   add_model(linear_reg() %>%
@@ -69,24 +77,29 @@ lm_wfl_simple <- workflow() %>%
   add_recipe(recipe(lost_revenue_total ~  lost_attendees,
                     data = small_train))
 
+# Fitting a complex model with a recipe that includes the type of org
+
 lm_wfl_medium <- workflow() %>% 
   add_model(linear_reg() %>%
             set_engine("lm") %>%
             set_mode("regression")) %>% 
-  add_recipe(recipe(lost_revenue_total ~  lost_attendees + purpose + date,
+  add_recipe(recipe(lost_revenue_total ~  lost_attendees + purpose,
                     data = small_train) %>%
                step_dummy(all_nominal()))
 
-# Fitting a more complex model with additional predictors
+# Fitting a more complex model with additional dummy predictors relating to 
+# financial health
 
 lm_wfl_complex <- workflow() %>% 
   add_model(linear_reg() %>%
             set_engine("lm") %>%
             set_mode("regression")) %>% 
-  add_recipe(recipe(lost_revenue_total ~  lost_attendees + cancelled_events + new_expenditures_amt + business_closure + purpose,
+  add_recipe(recipe(lost_revenue_total ~  lost_attendees + cancelled_events + 
+                      new_expenditures_amt + business_closure + purpose,
                     data = small_train) %>%
                step_dummy(all_nominal()))
 
+# Using cross validation to calculate metrics like RMSE on each model
 
 lm_metrics_simple <- lm_wfl_simple %>%
   fit_resamples(resamples = small_folds) %>%
@@ -99,8 +112,12 @@ lm_metrics_medium <- lm_wfl_medium %>%
 lm_metrics_complex <- lm_wfl_complex %>%
   fit_resamples(resamples = small_folds) %>%
   collect_metrics()
+```
 
+
+```{r}
 # Doing it all again with stan instead of a normal linear model
+# I didn't end up using these, but here they are regardless
 
 stan_wfl_simple <- workflow() %>% 
   add_model(linear_reg() %>%
@@ -117,8 +134,6 @@ stan_wfl_medium <- workflow() %>%
                     data = small_train) %>%
                step_dummy(all_nominal()))
 
-# Fitting a more complex model with additional predictors
-
 stan_wfl_complex <- workflow() %>% 
   add_model(linear_reg() %>%
             set_engine("stan") %>%
@@ -127,6 +142,7 @@ stan_wfl_complex <- workflow() %>%
                     data = small_train) %>%
                step_dummy(all_nominal()))
 
+# And doing the same metric collecting process for the stan model
 
 stan_metrics_simple <- lm_wfl_simple %>%
   fit_resamples(resamples = small_folds) %>%
@@ -139,87 +155,150 @@ stan_metrics_medium <- lm_wfl_medium %>%
 stan_metrics_complex <- lm_wfl_complex %>%
   fit_resamples(resamples = small_folds) %>%
   collect_metrics()
+```
 
-library(gt)
 
-model_comparison <- tibble(model = rep(c("Simple Linear Model", "Medium Linear Model",
+```{r}
+# Making a table to display metric comparisons for my 3 linear models
+
+# Feeding in the names oof the models 
+
+model_comparison <- tibble(model = rep(c("Simple Linear Model",
+                                         "Medium Linear Model",
                      "Complex Linear Model"), each = 2)) %>%
+  
+  # Here are the actual metrics as calculated before
+  
   bind_cols(bind_rows(lm_metrics_simple, lm_metrics_medium, 
                       lm_metrics_complex)) %>%
+  
+  # We don't care about r-squared, just RMSE here.
+  
   filter(.metric ==  "rmse") %>%
+  
+  # Selecting what I want to be displayed
+  
   select(model, mean, std_err) %>%
+  
+  # Renaming columns for display purposes
+  
   rename(Model = model, "Mean RMSE" = mean, "Standard Error" = std_err)  %>%
   gt()
 
-model_comparison
-
-library(webshot)
+# Saving this table as an RDS that I can use in my Shiny app
 
 saveRDS(model_comparison, "model_comparison.RDS")
 
-model_comparison
+# Seems like the simple model is the best based on RMSE (medium model
+# has the lowest, but not by a lot, and there's high uncertainty)
+```
 
-# Seems like the simple model is the best
+
+```{r}
+# Making a table that will give an overview of the three different models 
+# considerd
+
+# I basically did this by constructing a dataframe from scratch. Not super
+# elegant but it worked
+
+# This first row gives the name of the different variables considered. There's 
+# one row for each variable
 
 model_vars <- tibble(name = c("lost_attendees",
-                              "cancelled_events", "new_expenditures_amt", "business_closure"," purpose"),
-                     description = c("Total number of people/attendees expected to attend all events that have been canceled", "Indicator of whether an organization had canceled events due to COVID-19", "Estimation of the total amount ofunanticipated expenditures that made as a result of the coronavirus", "Indicator of whether business closure was a major
-                                     financial concern for the organziation", "Organizational purpose (performing arts, museum/gallery, etc.)"),
-                     type = c("numeric, dummy, numeric, dummy, factor"),
+                              "cancelled_events", "new_expenditures_amt", 
+                              "business_closure"," purpose"),
+                     
+                     # This row gives a description of the variables
+                     
+                     description = c("Total number of people/attendees 
+                                     expected to attend all events that have 
+                                     been canceled", 
+                     "Indicator of whether an organization had canceled events 
+                     due to COVID-19", 
+                     "Estimation of the total amount ofunanticipated 
+                     expenditures that made as a result of the coronavirus", 
+                     "Indicator of whether business closure was a major
+                                     financial concern for the organziation", 
+                     "Organizational purpose (performing arts, museum/gallery, 
+                     etc.)"),
+                     
+                     # This row gives the type of the variable
+                     
+                     type = c("numeric", "dummy", "numeric", "dummy", "factor"),
+                     
+                     # Was the variable in the simple model?
+                     
                      simple = c("Yes", "No", "No", "No", "No"),
+                     
+                     # Was the variable in the medium model?
+                     
                      medium = c("Yes", "No", "No", "No", "Yes"),
+                     
+                     # Was the variable in the complex model?
+                     
                      complex = c("Yes", "Yes", "Yes", "Yes", "Yes")) %>%
+  
+  # Renaming columns to nicer things for display purposes
+  
   rename("Variable name" = name, "Description" = description,
          "Variable Type" = type, "In Simple Model?" = simple,
          "In Medium Model?" = medium, "In Complex Model?" = complex)
+
+# Saving this table to use later
 
 saveRDS(model_vars, "model_vars.RDS")
 ```
 
 
 ```{r}
-# Now I'll fit on the train to calculate our future RMSE
+# Now I'll fit the simple model (my chosen best model) on the train to 
+# calculate our future RMSE
 
 lm_wfl_simple %>%
+  
+  # Reffiting the model on the training dataset
+  
   fit(data = small_train) %>%
+  
+  # Making predictions using the testing dataset
+  
   predict(new_data = small_test) %>%
+  
+  # Including the actual test data in order to calculate RMSE
+  
   bind_cols(small_test %>% select(lost_revenue_total)) %>%
+  
+  # Calculating RMSE for future data
+  
   metrics(truth = lost_revenue_total, estimate = .pred)
 
-# Refitting the model on the full dataset
+# Refitting the model on the full dataset for interprative purposes
 
-model_final <- stan_glm(lost_revenue_total ~  lost_attendees, data = small, refresh = 0)
+model_final <- stan_glm(lost_revenue_total ~  lost_attendees, data = small, 
+                        refresh = 0)
 
-print(model_final, digits = 3)
+# Saving this model
 
 saveRDS(model_final, "model_final.RDS")
 
-library(broom.mixed)
-library(gtsummary)
-
-model_final %>%
-  gt()
-
-
-  tbl_regression(model_final, intercept = TRUE) %>%
-  as_gt()
+# I was having trouble using gtsummary in shiny, so I just reconstructed a table
+# from scratch using the print(stan_glm) output
   
-  table<- tbl_regression(model_final, intercept = TRUE) %>%
-            as_gt()
-  
-  model_final_tbl <- tibble("Parameter" = c("Intercept", "lost_attendees", "sigma"),
+  model_final_tbl <- tibble("Parameter" = c("Intercept", "lost_attendees", 
+                                            "sigma"),
                             "Median" = c(29220.803, 1.450, 31490.402),
                             "MAD_SD" = c(1267.291, 0.212, 0.212))
   
-  saveRDS(model_final_tbl, "model_final_tbl.RDS")
+  # Saving this for use in my Shiny app
   
-  class(table)
-  class(model_comparison)
+  saveRDS(model_final_tbl, "model_final_tbl.RDS")
 ```
 
 
 ```{r}
 # Time to make some graphs to show off what our predictive model can do! 
+
+# Explanations for this code are in the shiny server
 
 new_obs <- tibble(lost_attendees = 10000)
 
@@ -246,20 +325,11 @@ model_predictions <- cbind(individual, average) %>%
   scale_fill_manual(values = cute_pal) + 
   theme_bw() +
   labs(title = "Posterior Probability Distribution",
-       subtitle = "Making individual and average predictions using our chosen model", x = "Predicted Lost Revenue", y = "Probability")
+       subtitle = "Making individual and average predictions 
+       using our chosen model", x = "Predicted Lost Revenue", y = "Probability")
 
 ```
 
 
-```{r}
-# Setting up graphs to make predictions 
 
-cute_pal <- c("thistle", "lavenderblush2", "lightblue1", "thistle2", 
-                "lightblue3", "azure3", "darkmagenta", "maroon","plum4")
-  
-  col2hex <- function(col, alpha) rgb(t(col2rgb(col)), alpha=alpha, maxColorValue=255)
-  
-  cute_pal_hex <- col2hex(cute_pal)
-  cute_pal_hex
-```
 

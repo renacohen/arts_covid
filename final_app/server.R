@@ -307,12 +307,15 @@ shinyServer(function(input, output) {
   
   output$states_1 <- renderPlot({
     
+    covid_rates %>%
+      filter(abbreviation != "NY") %>%
+    
     # The x axis of this scatterplot will show the positive COVID rate
     # and the y-axis the average financial severity within that state on a  
     # one to five scale. Note that the data is already at state level from
     # before when I saved it as an RDS
     
-    ggplot(covid_rates, aes(x = pos_rate, y = financial_severity)) +
+    ggplot(aes(x = pos_rate, y = financial_severity)) +
       
       # Rather than points, I wanted the labels to be the states. So first 
       # I had to get rid of the points
@@ -349,7 +352,10 @@ shinyServer(function(input, output) {
   
   output$states_2 <- renderPlot({
     
-    ggplot(covid_rates, aes(x = pos_rate, y = likelihood_staff_reductions)) +
+    covid_rates %>%
+      filter(abbreviation != "NY") %>%
+    
+    ggplot(aes(x = pos_rate, y = likelihood_staff_reductions)) +
       geom_point(alpha = 0, na.rm = T) + 
       geom_text(aes(label = abbreviation), color = "lightblue3") +
       geom_smooth(method = "lm", formula = y~x, color = "lightblue4") +
@@ -367,6 +373,7 @@ shinyServer(function(input, output) {
   output$states_3 <- renderPlot({
     
     covid_rates %>%
+      filter(abbreviation != "NY") %>%
       ggplot(aes(x = pos_rate, y = survival_chances)) +
       geom_point(alpha = 0, na.rm = T) + 
       geom_text(aes(label = abbreviation), color = "thistle3") +
@@ -490,7 +497,7 @@ shinyServer(function(input, output) {
       scale_fill_manual(values = cute_pal) + 
       theme_bw() +
       
-      # Titlign the graph
+      # Titling the graph
       
       labs(title = "Posterior Probability Distribution",
            subtitle = "Making individual and average predictions using our chosen model", 

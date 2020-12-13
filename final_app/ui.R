@@ -70,7 +70,9 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                                                right as a wave of lockdowns, closures, and 
                                                stay-at-home orders swept the nation. While 
                                                the survey has continued to be open up until the 
-                                               present, the bulk of responses are from March through May.  
+                                               present, the bulk of responses are from March through May,
+                                               with a few spikes where the survey was re-publicized 
+                                               en masse.  
                                                This is important to keep in mind during analysis, as
                                                many reports of lost revenue pertain only to the amount 
                                                that an organization had lost within the first month or 
@@ -333,29 +335,17 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                  # and health trends
                  
                  tabPanel("In Dialogue with the Pandemic",
+                          h2("Contextualizing the Economic Impact of COVID-19 on Arts Organizations"),
+                          p("COVID-19 had an intense economic impact on arts organizations.
+                            In our model, we explored the lost revenue in small organizations, which tended to be in the tens of thousands. 
+                            Americans for the Arts estimates over $1,700,000,000 in economic damage to arts organizations that have responded to the survey to date (their data is about 2 months more recent than the data analyzed in this project).
+                            Unsurprisingly, this has caused many organizations to struggle to pay their workers 33% of organizations surveyed laid off or furloughed artists or creative workforce members, and 35% have reduced salaries and payroll.
+                            How have these metrics compare to organizations in non-arts sectors? 
+                            Is the degree of economic damage the same around the nation? 
+                            These are big questions that merit further analysis, but this page will begin to tackle them, situating the economic impact of COVID-19 on arts organizations within the broader context of the pandemic."),
                           
-                          # This row contains some unemployment background
-                          # and my animation
-                          
-                          fluidRow(
-                            column(4, 
-                                   h3("Understanding Sector-Wide Impact"),
-                                   p("To help put into perspective the widespread,
-                                     national economic crisis that COVID-19 has caused 
-                                     for arts organizations, take a look at unemployment rates.
-                                     While unemployment rates for artists were lower than
-                                     the general population at the beginning of 2020, they skyrocketed
-                                     during the pandemic and have yet to come anywhere close to pre-pandemic
-                                     levels. This suggests the need for special relief legislation target specifically
-                                     at helping artists and arts organizations.")),
-                            
-                            # I saved the animation as an html, so used 
-                            # htmlOutput to get it
-                            
-                            column(8, 
-                                   htmlOutput("animation"))
-                          ),
-                          
+                          br(),
+                          br(),
                           # This row shows how cases didn't seem to have much of an
                           # impact on financial wellbeing of arts organizations
                           
@@ -382,15 +372,47 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                                    p("Did arts organizations around the nation feel the effects
                                    of the pandemic similarly? The answer seems to be yes (at least
                                    for the March-May timeframe, which is what's shown in the plot).
-                                   Despite some states such as New York, New Jersey, and Massachussets
+                                   Despite some states
                                    having much higher rates of COVID-19, arts organizations with
                                    budgets between $100,000 and $249,999 (the same sub-group predicted
                                    in the model) self-rated the economic damage done to their organizations
-                                   at similar levels around the nation. This
+                                   at similar levels around the nation; even organizations
+                                   in NY, a state
+                                   which is not shown on this plot because 
+                                   its COVID-19 rates were a high outlier for 
+                                   this time period, had about average ratings
+                                   of financial impact. This
                                    lack of an obvious relationship between statewide COVID-19 case rates and 
                                    economic impact on arts organizations, as shown by the nearly flat trendline,
                                    suggests that programs at the national level could be an effective
-                                   way to address this widespread economic hardship.")))),
+                                   way to address this widespread economic hardship."))),
+                          
+                          # This row contains some unemployment background
+                          # and my animation
+                          br(),
+                          br(),
+                          
+                          fluidRow(
+                            column(4, 
+                                   h3("Understanding Sector-Wide Impact"),
+                                   p("To help put into perspective the widespread,
+                                     national economic crisis that COVID-19 has caused 
+                                     for arts organizations, take a look at unemployment rates.
+                                     While unemployment rates for artists specifically were lower than
+                                     the general unemployement rate (shown as 'total' on the graph) 
+                                     at the beginning of 2020, they skyrocketed
+                                     during the pandemic and have yet to come 
+                                     anywhere close to pre-pandemic
+                                     levels. This suggests the need for special 
+                                     relief legislation target specifically
+                                     at helping artists and arts organizations.")),
+                            
+                            # I saved the animation as an html, so used 
+                            # htmlOutput to get it
+                            
+                            column(8, 
+                                   htmlOutput("animation"))
+                          )),
                  
                  
                  # This panel explores textual responses in the survey via
@@ -467,7 +489,14 @@ ui <- navbarPage("The Impact of Coronavirus On Arts Organizations",
                           br(),
                           h4("About the Cause"),
                           p("If nothing else, I hope you took away from this project that artists and arts organizations have
-                             been devastated by the economic effects of the COVID-19 pandemic. If you are interested in helping this
+                             been devastated by the economic effects of the COVID-19 pandemic. I suggested in my project that
+                             a national policy solution would be necessary; while this could take a variety of forms,
+                             some possible solutions could be maintaining the unemployment benefits offered by the CARES
+                             Act into the new year, creating a WPA-style federally funded effort to put artists back to work,
+                             or introducing another round of federal relief to be distributed through the National Endowment
+                             for the Arts."),
+                          br(),
+                            p("If you are interested in helping this
                              cause, consider reaching out to your local arts organizations, donating to an artist relief fund,
                              or contacting your representatitive to advocate for the arts using one of the many", 
                             a("advocacy tools offered by AFTA.", href = "https://www.americansforthearts.org/advocate")),
